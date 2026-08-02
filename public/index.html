@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yaka Marché — Achète, vends, gagne au Congo</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <span class="eyebrow">Marketplace locale — Brazzaville &amp; tout le Congo</span>
+    <h1>Achète, vends,<br><em>gagne ta vie</em> — au Congo.</h1>
+    <p class="lede">Publie ce que tu vends, un acheteur te contacte directement sur WhatsApp. Pas de frais cachés, pas d'intermédiaire sur la vente. Tu gardes 100% de ce que tu gagnes.</p>
+    <div class="actions">
+      <a href="/publier" class="btn btn-primary">Publier une annonce</a>
+      <a href="/annonces" class="btn btn-outline">Voir les annonces</a>
+    </div>
+  </div>
+</header>
+
+<hr class="divider">
+
+<section>
+  <div class="container">
+    <div class="section-head">
+      <h2>Fait pour les deux côtés du marché</h2>
+      <p>Que tu cherches à acheter ou à vendre, tout se passe sur la même plateforme, sans compte compliqué.</p>
+    </div>
+    <div class="two-col">
+      <div class="feature-card">
+        <span class="tag">Acheteurs</span>
+        <h3>Trouve ce qu'il te faut, près de chez toi</h3>
+        <ul>
+          <li>Recherche par mot-clé et filtre par catégorie</li>
+          <li>Prix affichés en FCFA, sans surprise</li>
+          <li>Contact direct avec le vendeur sur WhatsApp</li>
+          <li>Aucune inscription nécessaire pour parcourir et contacter</li>
+        </ul>
+        <div class="actions">
+          <a href="/annonces" class="btn btn-outline btn-sm">Parcourir les annonces</a>
+        </div>
+      </div>
+      <div class="feature-card">
+        <span class="tag">Vendeurs</span>
+        <h3>Vends tes produits et services</h3>
+        <ul>
+          <li>Publication gratuite, en quelques minutes</li>
+          <li>Tableau de bord pour gérer tes annonces</li>
+          <li>Option "mise en avant" pour être vu en premier</li>
+          <li>Tu restes propriétaire de la vente et du contact client</li>
+        </ul>
+        <div class="actions">
+          <a href="/inscription" class="btn btn-primary btn-sm">Créer un compte vendeur</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section class="tight">
+  <div class="container">
+    <div class="stat-strip">
+      <div class="stat-box">
+        <div class="n mono">0 FCFA</div>
+        <div class="l">Frais de publication</div>
+      </div>
+      <div class="stat-box">
+        <div class="n mono">500 FCFA</div>
+        <div class="l">Mise en avant d'une annonce</div>
+      </div>
+      <div class="stat-box">
+        <div class="n mono">100%</div>
+        <div class="l">De la vente pour toi</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inscription — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="panel panel-narrow">
+      <h2 style="margin-bottom:8px;">Créer un compte</h2>
+      <p class="form-note" style="margin-bottom:28px;">Un seul compte pour acheter et vendre sur Yaka Marché.</p>
+
+      <form id="register-form">
+        <div class="field" style="margin-bottom:16px;">
+          <label>Nom complet</label>
+          <input type="text" id="f-name" required>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>Email</label>
+          <input type="email" id="f-email" required>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>Numéro WhatsApp</label>
+          <input type="text" id="f-phone" placeholder="Ex : 06 xxx xx xx" required>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>Ville</label>
+          <input type="text" id="f-city" placeholder="Ex : Brazzaville">
+        </div>
+        <div class="field" style="margin-bottom:8px;">
+          <label>Mot de passe</label>
+          <input type="password" id="f-password" minlength="6" required>
+        </div>
+        <div class="form-error" id="form-error"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Créer mon compte</button>
+      </form>
+
+      <p class="form-note" style="margin-top:20px; text-align:center;">
+        Déjà inscrit ? <a href="/connexion" style="color:var(--yellow);">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+document.getElementById('register-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById('form-error');
+  const btn = document.getElementById('submit-btn');
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Création en cours...';
+
+  try {
+    const data = await apiFetch('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('f-name').value.trim(),
+        email: document.getElementById('f-email').value.trim(),
+        phone: document.getElementById('f-phone').value.trim(),
+        city: document.getElementById('f-city').value.trim(),
+        password: document.getElementById('f-password').value
+      })
+    });
+    setSession(data.token, data.user);
+    window.location.href = 'tableau-de-bord.html';
+  } catch (err) {
+    errorEl.textContent = err.message;
+    btn.disabled = false;
+    btn.textContent = 'Créer mon compte';
+  }
+});
+</script>
+</body>
+</html>

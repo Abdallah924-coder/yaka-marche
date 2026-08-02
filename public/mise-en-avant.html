@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mettre en avant — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container" style="max-width:760px;">
+
+    <div class="section-head">
+      <h2>Mettre en avant ton annonce</h2>
+      <p id="listing-title" class="form-note">Chargement de l'annonce...</p>
+    </div>
+
+    <div id="content">
+      <div class="loading">Chargement...</div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+requireAuth();
+
+const params = new URLSearchParams(window.location.search);
+const listingId = params.get('id');
+let selectedMethod = null;
+let proofDataUrl = null;
+
+async function init() {
+  if (!listingId) {
+    document.getElementById('content').innerHTML = '<div class="empty">Annonce manquante.</div>';
+    return;
+  }
+
+  try {
+    const [listingData, infoData] = await Promise.all([
+      apiFetch('/listings/' + listingId),
+      apiFetch('/payments/info')
+    ]);
+
+    document.getElementById('listing-title').textContent =
+      '"' + listingData.listing.title + '" — ' + formatPrice(infoData.priceFcfa) + ' pour la mise en avant';
+
+    renderForm(infoData);
+  } catch (err) {
+    document.getElementById('content').innerHTML = '<div class="empty">' + err.message + '</div>';
+  }
+}
+
+function renderForm(info) {
+  const content = document.getElementById('content');
+  content.innerHTML = `
+    <div class="pay-methods">
+      <div class="pay-method" id="method-momo" data-method="momo">
+        <h4>💛 MTN Mobile Money</h4>
+        <div class="kv"><span>Numéro</span><b>${info.momo.number || 'à configurer'}</b></div>
+        <div class="kv"><span>Nom du bénéficiaire</span><b>${info.momo.name || 'à configurer'}</b></div>
+        <div class="kv"><span>Montant</span><b>${formatPrice(info.priceFcfa)}</b></div>
+      </div>
+      <div class="pay-method" id="method-crypto" data-method="crypto">
+        <h4>🪙 Paiement crypto</h4>
+        <div class="kv"><span>Réseau</span><b>${info.crypto.network || 'à configurer'}</b></div>
+        <div class="kv"><span>Adresse</span><b style="word-break:break-all;">${info.crypto.address || 'à configurer'}</b></div>
+        <div class="kv"><span>Montant</span><b>${info.crypto.amount || '—'} (≈ ${formatPrice(info.priceFcfa)})</b></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="form-note" style="margin-bottom:16px;">
+        1. Choisis un mode de paiement ci-dessus.<br>
+        2. Effectue le paiement du montant indiqué.<br>
+        3. Ajoute une capture d'écran du paiement, puis envoie la demande.<br>
+        La mise en avant sera activée après validation par l'administrateur.
+      </p>
+
+      <label class="upload-box" id="upload-box">
+        <input type="file" id="proof-input" accept="image/*">
+        <span id="upload-label">Cliquer pour ajouter la capture d'écran du paiement</span>
+        <div><img id="preview" class="preview-img hidden"></div>
+      </label>
+
+      <div class="form-error" id="form-error" style="margin-top:14px;"></div>
+      <button class="btn btn-primary btn-block" id="submit-btn" style="margin-top:14px;" disabled>
+        Choisis un mode de paiement et une capture d'écran
+      </button>
+    </div>
+  `;
+
+  document.querySelectorAll('.pay-method').forEach(el => {
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedMethod = el.dataset.method;
+      updateSubmitState();
+    });
+  });
+
+  const input = document.getElementById('proof-input');
+  const uploadBox = document.getElementById('upload-box');
+  const preview = document.getElementById('preview');
+  const uploadLabel = document.getElementById('upload-label');
+
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      proofDataUrl = reader.result;
+      preview.src = proofDataUrl;
+      preview.classList.remove('hidden');
+      uploadBox.classList.add('has-file');
+      uploadLabel.textContent = 'Capture ajoutée — clique pour la changer';
+      updateSubmitState();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('submit-btn').addEventListener('click', submitProof);
+}
+
+function updateSubmitState() {
+  const btn = document.getElementById('submit-btn');
+  if (selectedMethod && proofDataUrl) {
+    btn.disabled = false;
+    btn.textContent = 'Envoyer ma demande de mise en avant';
+  } else {
+    btn.disabled = true;
+    btn.textContent = 'Choisis un mode de paiement et une capture d\'écran';
+  }
+}
+
+async function submitProof() {
+  const errorEl = document.getElementById('form-error');
+  const btn = document.getElementById('submit-btn');
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Envoi en cours...';
+
+  try {
+    await apiFetch('/payments/boost-request', {
+      method: 'POST',
+      body: JSON.stringify({ listingId, method: selectedMethod, proofImage: proofDataUrl })
+    });
+
+    document.getElementById('content').innerHTML = `
+      <div class="panel" style="text-align:center;">
+        <h3 style="margin-bottom:10px;">Demande envoyée ✅</h3>
+        <p class="form-note">Ta preuve de paiement a été transmise. Ton annonce sera mise en avant
+        dès que l'administrateur aura validé le paiement. Tu recevras un email de confirmation.</p>
+        <a href="/tableau-de-bord" class="btn btn-outline" style="margin-top:20px;">Retour au tableau de bord</a>
+      </div>
+    `;
+  } catch (err) {
+    errorEl.textContent = err.message;
+    btn.disabled = false;
+    updateSubmitState();
+  }
+}
+
+init();
+</script>
+</body>
+</html>

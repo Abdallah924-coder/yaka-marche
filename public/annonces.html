@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Annonces — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="section-head">
+      <h2>Toutes les annonces</h2>
+      <p>Les annonces mises en avant apparaissent en premier.</p>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="Rechercher (titre, description, ville...)">
+      <select id="sort" style="max-width:200px;">
+        <option value="recent">Plus récentes</option>
+        <option value="price_asc">Prix croissant</option>
+        <option value="price_desc">Prix décroissant</option>
+      </select>
+    </div>
+    <div class="toolbar" id="cat-chips">
+      <button class="chip active" data-cat="Toutes">Toutes</button>
+      <button class="chip" data-cat="Services">Services</button>
+      <button class="chip" data-cat="Electronique">Électronique</button>
+      <button class="chip" data-cat="Mode">Mode</button>
+      <button class="chip" data-cat="Immobilier">Immobilier</button>
+      <button class="chip" data-cat="Vehicules">Véhicules</button>
+      <button class="chip" data-cat="Cours & Formation">Cours</button>
+      <button class="chip" data-cat="Autre">Autre</button>
+    </div>
+
+    <div class="listings" id="listings">
+      <div class="loading">Chargement des annonces...</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+let activeCat = 'Toutes';
+let searchTimer = null;
+
+async function loadListings() {
+  const listEl = document.getElementById('listings');
+  listEl.innerHTML = '<div class="loading">Chargement des annonces...</div>';
+
+  const search = document.getElementById('search').value.trim();
+  const sort = document.getElementById('sort').value;
+  const params = new URLSearchParams();
+  if (activeCat !== 'Toutes') params.set('category', activeCat);
+  if (search) params.set('search', search);
+  if (sort) params.set('sort', sort);
+
+  try {
+    const data = await apiFetch('/listings?' + params.toString());
+    renderListings(data.listings);
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty">Impossible de charger les annonces pour le moment.</div>';
+  }
+}
+
+function renderListings(listings) {
+  const listEl = document.getElementById('listings');
+  if (!listings.length) {
+    listEl.innerHTML = '<div class="empty">Aucune annonce trouvée. Sois le premier à publier.</div>';
+    return;
+  }
+
+  listEl.innerHTML = listings.map(l => `
+    <a class="card ${l.featured ? 'featured' : ''}" href="annonce.html?id=${l.id}">
+      ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
+      <span class="cat-pill">${l.category}</span>
+      <h3>${l.title}</h3>
+      <div class="desc">${l.description}</div>
+      <div class="price mono">${formatPrice(l.price)}</div>
+      <div class="meta">${l.city} · publié le ${formatDate(l.createdAt)}</div>
+    </a>
+  `).join('');
+}
+
+document.getElementById('search').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadListings, 300);
+});
+document.getElementById('sort').addEventListener('change', loadListings);
+
+document.querySelectorAll('#cat-chips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#cat-chips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeCat = chip.dataset.cat;
+    loadListings();
+  });
+});
+
+loadListings();
+</script>
+</body>
+</html>

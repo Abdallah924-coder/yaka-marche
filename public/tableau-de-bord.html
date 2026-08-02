@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tableau de bord — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="section-head">
+      <h2>Mon tableau de bord</h2>
+      <p>Gère tes annonces, suis leurs performances, mets-les en avant.</p>
+    </div>
+
+    <div class="stat-strip" id="stats">
+      <div class="stat-box"><div class="n mono" id="stat-total">—</div><div class="l">Annonces publiées</div></div>
+      <div class="stat-box"><div class="n mono" id="stat-featured">—</div><div class="l">Mises en avant</div></div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+      <div id="rows"><div class="loading">Chargement...</div></div>
+    </div>
+
+    <div style="margin-top:24px;">
+      <a href="/publier" class="btn btn-primary">Publier une nouvelle annonce</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+requireAuth();
+
+async function loadMine() {
+  const rowsEl = document.getElementById('rows');
+  try {
+    const data = await apiFetch('/listings/mine');
+    renderRows(data.listings);
+  } catch (err) {
+    rowsEl.innerHTML = '<div class="empty">Impossible de charger tes annonces.</div>';
+  }
+}
+
+function renderRows(listings) {
+  const rowsEl = document.getElementById('rows');
+  document.getElementById('stat-total').textContent = listings.length;
+  document.getElementById('stat-featured').textContent = listings.filter(l => l.featured).length;
+
+  if (!listings.length) {
+    rowsEl.innerHTML = '<div class="empty">Tu n\'as encore publié aucune annonce.</div>';
+    return;
+  }
+
+  rowsEl.innerHTML = listings.map(l => `
+    <div class="dash-row" data-id="${l.id}">
+      <div class="info">
+        <h4>${l.title} ${l.featured ? '<span class="featured-tag" style="position:static; margin-left:8px;">En avant</span>' : ''}</h4>
+        <div class="meta">${formatPrice(l.price)} · ${l.city} · publié le ${formatDate(l.createdAt)}</div>
+      </div>
+      <div class="actions">
+        <a class="btn btn-outline btn-sm" href="/annonce?id=${l.id}">Voir</a>
+        ${!l.featured ? `<a class="btn btn-leather btn-sm" href="mise-en-avant.html?id=${l.id}">Mettre en avant · 500 FCFA</a>` : ''}
+        <button class="btn btn-danger btn-sm" data-delete="${l.id}">Supprimer</button>
+      </div>
+    </div>
+  `).join('');
+
+  rowsEl.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', () => deleteListing(btn.dataset.delete));
+  });
+}
+
+async function deleteListing(id) {
+  if (!confirm('Supprimer cette annonce ?')) return;
+  try {
+    await apiFetch('/listings/' + id, { method: 'DELETE' });
+    showToast('Annonce supprimée.');
+    loadMine();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+loadMine();
+</script>
+</body>
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="section-head">
+      <h2>Administration</h2>
+      <p>Vue d'ensemble, demandes de mise en avant à valider, et liste des utilisateurs.</p>
+    </div>
+
+    <div id="access-check"><div class="loading">Vérification des droits...</div></div>
+
+    <div id="admin-content" class="hidden">
+
+      <div class="stat-strip" id="stats">
+        <div class="stat-box"><div class="n mono" id="stat-users">—</div><div class="l">Utilisateurs</div></div>
+        <div class="stat-box"><div class="n mono" id="stat-listings">—</div><div class="l">Annonces</div></div>
+        <div class="stat-box"><div class="n mono" id="stat-featured">—</div><div class="l">Mises en avant actives</div></div>
+        <div class="stat-box"><div class="n mono" id="stat-pending">—</div><div class="l">Demandes en attente</div></div>
+      </div>
+
+      <div style="margin-top:48px;">
+        <div class="section-head">
+          <h2 style="font-size:1.5rem;">Demandes de mise en avant</h2>
+          <p>Vérifie chaque capture d'écran avant de valider.</p>
+        </div>
+        <div id="requests-content"><div class="loading">Chargement...</div></div>
+      </div>
+
+      <div style="margin-top:48px;">
+        <div class="section-head">
+          <h2 style="font-size:1.5rem;">Utilisateurs</h2>
+          <p>Email, date d'inscription et nombre d'annonces publiées.</p>
+        </div>
+        <div class="panel" id="users-content"><div class="loading">Chargement...</div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+requireAuth();
+
+async function init() {
+  const accessCheck = document.getElementById('access-check');
+  try {
+    const me = await apiFetch('/auth/me');
+    if (!me.user.isAdmin) {
+      accessCheck.innerHTML = '<div class="empty">Accès réservé à l\'administrateur.</div>';
+      return;
+    }
+    accessCheck.classList.add('hidden');
+    document.getElementById('admin-content').classList.remove('hidden');
+    loadStats();
+    loadRequests();
+    loadUsers();
+  } catch (err) {
+    accessCheck.innerHTML = '<div class="empty">' + err.message + '</div>';
+  }
+}
+
+async function loadStats() {
+  try {
+    const s = await apiFetch('/admin/stats');
+    document.getElementById('stat-users').textContent = s.totalUsers;
+    document.getElementById('stat-listings').textContent = s.totalListings;
+    document.getElementById('stat-featured').textContent = s.totalFeatured;
+    document.getElementById('stat-pending').textContent = s.totalPendingBoosts;
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function loadRequests() {
+  const content = document.getElementById('requests-content');
+  content.innerHTML = '<div class="loading">Chargement des demandes...</div>';
+
+  try {
+    const data = await apiFetch('/payments/boost-requests');
+    renderRequests(data.boostRequests);
+  } catch (err) {
+    content.innerHTML = '<div class="empty">' + err.message + '</div>';
+  }
+}
+
+function renderRequests(requests) {
+  const content = document.getElementById('requests-content');
+
+  if (!requests.length) {
+    content.innerHTML = '<div class="empty">Aucune demande en attente.</div>';
+    return;
+  }
+
+  content.innerHTML = requests.map(r => `
+    <div class="admin-card" data-id="${r.id}">
+      <div class="row">
+        <div>
+          <span class="badge badge-pending">En attente</span>
+          <h3 style="margin-top:8px;">${r.listing ? r.listing.title : 'Annonce supprimée'}</h3>
+          <div class="meta">
+            ${r.user ? r.user.name + ' · ' + r.user.email + ' · ' + r.user.phone : 'Utilisateur inconnu'}<br>
+            Méthode : ${r.method === 'momo' ? 'MTN Mobile Money' : 'Crypto'} · ${formatPrice(r.amountFcfa)}<br>
+            Envoyé le ${formatDate(r.createdAt)}
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary btn-sm" data-approve="${r.id}">Valider</button>
+          <button class="btn btn-danger btn-sm" data-reject="${r.id}">Rejeter</button>
+        </div>
+      </div>
+      <img class="preview-img" src="${r.proofImage}" alt="Preuve de paiement">
+    </div>
+  `).join('');
+
+  content.querySelectorAll('[data-approve]').forEach(btn => {
+    btn.addEventListener('click', () => reviewRequest(btn.dataset.approve, 'approve'));
+  });
+  content.querySelectorAll('[data-reject]').forEach(btn => {
+    btn.addEventListener('click', () => reviewRequest(btn.dataset.reject, 'reject'));
+  });
+}
+
+async function reviewRequest(id, action) {
+  try {
+    await apiFetch('/payments/boost-requests/' + id + '/' + action, { method: 'POST' });
+    showToast(action === 'approve' ? 'Mise en avant validée.' : 'Demande rejetée.');
+    loadRequests();
+    loadStats();
+  } catch (err) {
+    showToast(err.message, true);
+  }
+}
+
+async function loadUsers() {
+  const content = document.getElementById('users-content');
+  try {
+    const data = await apiFetch('/admin/users');
+    renderUsers(data.users);
+  } catch (err) {
+    content.innerHTML = '<div class="empty">' + err.message + '</div>';
+  }
+}
+
+function renderUsers(users) {
+  const content = document.getElementById('users-content');
+  if (!users.length) {
+    content.innerHTML = '<div class="empty">Aucun utilisateur pour l\'instant.</div>';
+    return;
+  }
+
+  content.innerHTML = users.map(u => `
+    <div class="dash-row">
+      <div class="info">
+        <h4>${u.name}</h4>
+        <div class="meta">
+          ${u.email} · ${u.phone}${u.city ? ' · ' + u.city : ''}<br>
+          Inscrit le ${formatDate(u.createdAt)} · ${u.listingsCount} annonce${u.listingsCount > 1 ? 's' : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+init();
+</script>
+</body>
+</html>
