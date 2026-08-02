@@ -101,7 +101,8 @@ function renderNavAuthState() {
 function initMobileNav() {
   const inner = document.querySelector('nav.topbar .inner');
   const links = document.querySelector('nav.topbar .nav-links');
-  if (!inner || !links || inner.querySelector('.nav-hamburger')) return;
+  const actions = document.querySelector('nav.topbar .nav-actions');
+  if (!inner || !links || !actions || inner.querySelector('.nav-hamburger')) return;
 
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -109,17 +110,20 @@ function initMobileNav() {
   btn.setAttribute('aria-label', 'Ouvrir le menu');
   btn.innerHTML = '<span></span><span></span><span></span>';
 
-  const actions = inner.querySelector('.nav-actions');
-  inner.insertBefore(btn, actions || null);
+  inner.insertBefore(btn, actions);
 
-  btn.addEventListener('click', () => {
+  function toggle() {
     const open = links.classList.toggle('mobile-open');
+    actions.classList.toggle('mobile-open', open);
     btn.classList.toggle('open', open);
-  });
+  }
 
-  links.querySelectorAll('a').forEach(a => {
+  btn.addEventListener('click', toggle);
+
+  [...links.querySelectorAll('a'), ...actions.querySelectorAll('a')].forEach(a => {
     a.addEventListener('click', () => {
       links.classList.remove('mobile-open');
+      actions.classList.remove('mobile-open');
       btn.classList.remove('open');
     });
   });
