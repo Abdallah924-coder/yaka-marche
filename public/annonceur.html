@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profil vendeur — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container" style="max-width:760px;">
+    <div id="content"><div class="loading">Chargement du profil...</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI — by Devoué</div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const sellerId = params.get('id');
+let myRating = 0;
+
+async function init() {
+  const content = document.getElementById('content');
+  if (!sellerId) {
+    content.innerHTML = '<div class="empty">Vendeur introuvable.</div>';
+    return;
+  }
+
+  try {
+    const data = await apiFetch('/sellers/' + sellerId);
+    render(data);
+  } catch (err) {
+    content.innerHTML = '<div class="empty">' + err.message + '</div>';
+  }
+}
+
+function render(data) {
+  const { seller, listings, reviews } = data;
+  const content = document.getElementById('content');
+  const me = getUser();
+  const isSelf = me && String(me.id) === String(seller.id);
+
+  content.innerHTML = `
+    <div class="panel" style="margin-bottom:28px;">
+      <h2 style="margin-bottom:6px;">${seller.name}</h2>
+      <div class="rating-line" style="margin-bottom:8px;">${renderStars(seller.ratingAvg, seller.ratingCount)}</div>
+      <div class="form-note">
+        ${seller.city ? seller.city + ' · ' : ''}Membre depuis ${formatDate(seller.memberSince)}
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2 style="font-size:1.3rem;">Annonces actives (${listings.length})</h2>
+    </div>
+    <div class="listings" style="margin-bottom:40px;">
+      ${listings.length ? listings.map(l => `
+        <a class="card ${l.featured ? 'featured' : ''}" href="/annonce?id=${l.id}">
+          ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
+          <div class="card-thumb">${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="">` : 'Pas de photo'}</div>
+          <span class="cat-pill">${l.category}</span>
+          <h3>${l.title}</h3>
+          <div class="price mono">${formatPrice(l.price)}</div>
+          <div class="meta">${l.city}</div>
+        </a>
+      `).join('') : '<div class="empty">Aucune annonce active pour l\'instant.</div>'}
+    </div>
+
+    <div class="section-head">
+      <h2 style="font-size:1.3rem;">Avis (${reviews.length})</h2>
+    </div>
+    <div class="panel" style="margin-bottom:28px;">
+      ${reviews.length ? reviews.map(r => `
+        <div class="review-card">
+          <div class="head">
+            <span class="who">${r.reviewerName}</span>
+            ${renderStars(r.rating)}
+          </div>
+          ${r.comment ? `<div class="comment">${r.comment}</div>` : ''}
+          <div class="meta" style="margin-top:4px;">${formatDate(r.createdAt)}</div>
+        </div>
+      `).join('') : '<div class="empty">Aucun avis pour l\'instant.</div>'}
+    </div>
+
+    <div id="review-form-wrap"></div>
+  `;
+
+  const formWrap = document.getElementById('review-form-wrap');
+  if (isSelf) {
+    formWrap.innerHTML = '';
+  } else if (!getToken()) {
+    formWrap.innerHTML = `
+      <div class="panel" style="text-align:center;">
+        <p class="form-note" style="margin-bottom:16px;">Connecte-toi pour laisser un avis sur ce vendeur.</p>
+        <a href="/connexion" class="btn btn-outline">Connexion</a>
+      </div>
+    `;
+  } else {
+    renderReviewForm();
+  }
+}
+
+function renderReviewForm() {
+  const formWrap = document.getElementById('review-form-wrap');
+  formWrap.innerHTML = `
+    <div class="panel">
+      <h3 style="margin-bottom:14px; font-size:1.1rem;">Laisser un avis</h3>
+      <div class="star-picker" id="star-picker">
+        ${[1,2,3,4,5].map(i => `<span class="star" data-value="${i}">★</span>`).join('')}
+      </div>
+      <textarea id="review-comment" placeholder="Ton expérience avec ce vendeur (optionnel)" style="margin-top:14px;"></textarea>
+      <div class="form-error" id="review-error" style="margin-top:8px;"></div>
+      <button class="btn btn-primary" id="review-submit" style="margin-top:10px;" disabled>Choisis une note</button>
+    </div>
+  `;
+
+  const stars = document.querySelectorAll('#star-picker .star');
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      myRating = Number(star.dataset.value);
+      stars.forEach(s => s.classList.toggle('filled', Number(s.dataset.value) <= myRating));
+      const btn = document.getElementById('review-submit');
+      btn.disabled = false;
+      btn.textContent = 'Envoyer mon avis';
+    });
+  });
+
+  document.getElementById('review-submit').addEventListener('click', submitReview);
+}
+
+async function submitReview() {
+  const errorEl = document.getElementById('review-error');
+  const btn = document.getElementById('review-submit');
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Envoi...';
+
+  try {
+    await apiFetch('/sellers/' + sellerId + '/reviews', {
+      method: 'POST',
+      body: JSON.stringify({ rating: myRating, comment: document.getElementById('review-comment').value.trim() })
+    });
+    showToast('Avis envoyé, merci !');
+    init();
+  } catch (err) {
+    errorEl.textContent = err.message;
+    btn.disabled = false;
+    btn.textContent = 'Envoyer mon avis';
+  }
+}
+
+init();
+</script>
+</body>
+</html>

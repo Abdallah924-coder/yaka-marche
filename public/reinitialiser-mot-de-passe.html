@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Réinitialiser le mot de passe — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="panel panel-narrow" id="panel">
+      <div id="no-token" class="hidden">
+        <h2 style="margin-bottom:10px;">Lien invalide</h2>
+        <p class="form-note">Ce lien de réinitialisation est incomplet ou a expiré.</p>
+        <a href="/mot-de-passe-oublie" class="btn btn-outline" style="margin-top:20px;">Demander un nouveau lien</a>
+      </div>
+
+      <form id="reset-form">
+        <h2 style="margin-bottom:8px;">Nouveau mot de passe</h2>
+        <p class="form-note" style="margin-bottom:24px;">Choisis un nouveau mot de passe pour ton compte.</p>
+        <div class="field" style="margin-bottom:16px;">
+          <label>Nouveau mot de passe</label>
+          <input type="password" id="f-password" minlength="6" required>
+        </div>
+        <div class="field" style="margin-bottom:8px;">
+          <label>Confirme le mot de passe</label>
+          <input type="password" id="f-password-confirm" minlength="6" required>
+        </div>
+        <div class="form-error" id="form-error"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Réinitialiser le mot de passe</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI — by Devoué</div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+const token = new URLSearchParams(window.location.search).get('token');
+
+if (!token) {
+  document.getElementById('reset-form').classList.add('hidden');
+  document.getElementById('no-token').classList.remove('hidden');
+}
+
+document.getElementById('reset-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById('form-error');
+  const btn = document.getElementById('submit-btn');
+  errorEl.textContent = '';
+
+  const password = document.getElementById('f-password').value;
+  const confirm = document.getElementById('f-password-confirm').value;
+  if (password !== confirm) {
+    errorEl.textContent = 'Les deux mots de passe ne correspondent pas.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Réinitialisation...';
+
+  try {
+    await apiFetch('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password })
+    });
+
+    document.getElementById('panel').innerHTML = `
+      <h2 style="margin-bottom:10px;">Mot de passe mis à jour ✅</h2>
+      <p class="form-note">Tu peux maintenant te connecter avec ton nouveau mot de passe.</p>
+      <a href="/connexion" class="btn btn-primary" style="margin-top:20px;">Se connecter</a>
+    `;
+  } catch (err) {
+    errorEl.textContent = err.message;
+    btn.disabled = false;
+    btn.textContent = 'Réinitialiser le mot de passe';
+  }
+});
+</script>
+</body>
+</html>

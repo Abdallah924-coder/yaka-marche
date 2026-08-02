@@ -9,12 +9,13 @@ const authRoutes = require('./routes/auth');
 const listingRoutes = require('./routes/listings');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
+const sellerRoutes = require('./routes/sellers');
 
 const app = express();
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 // Limite relevee pour accepter les captures d'ecran de paiement en base64
-app.use(express.json({ limit: '6mb' }));
+app.use(express.json({ limit: '15mb' }));
 
 // --- API ---
 app.use('/api/auth', authRoutes);

@@ -4,12 +4,19 @@ const User = require('../models/User');
 const { requireAuth } = require('../middleware/auth');
 const { listingPublishedEmail } = require('../utils/brevo');
 
+const IMAGE_REQUIRED_CATEGORIES = Listing.IMAGE_REQUIRED_CATEGORIES;
+
 const router = express.Router();
+
+const OWNER_FIELDS = 'name phone ratingAvg ratingCount';
 
 function publicListing(listing) {
   const owner = listing.owner && listing.owner.name ? {
+    id: listing.owner._id,
     name: listing.owner.name,
-    phone: listing.owner.phone
+    phone: listing.owner.phone,
+    ratingAvg: listing.owner.ratingAvg,
+    ratingCount: listing.owner.ratingCount
   } : undefined;
 
   return {
@@ -20,6 +27,7 @@ function publicListing(listing) {
     description: listing.description,
     city: listing.city,
     phone: listing.phone,
+    images: listing.images || [],
     featured: listing.featured,
     status: listing.status,
     createdAt: listing.createdAt,
@@ -29,7 +37,6 @@ function publicListing(listing) {
 }
 
 // GET /api/listings?category=&search=&sort=recent|price_asc|price_desc
-// Par defaut, les annonces "featured" (mise en avant validee) apparaissent en premier.
 router.get('/', async (req, res) => {
   try {
     const { category, search, sort } = req.query;
@@ -42,7 +49,7 @@ router.get('/', async (req, res) => {
       filter.$text = { $search: search };
     }
 
-    let query = Listing.find(filter).populate('owner', 'name phone');
+    let query = Listing.find(filter).populate('owner', OWNER_FIELDS);
 
     if (sort === 'price_asc') query = query.sort({ featured: -1, price: 1 });
     else if (sort === 'price_desc') query = query.sort({ featured: -1, price: -1 });
@@ -70,7 +77,7 @@ router.get('/mine', requireAuth, async (req, res) => {
 // GET /api/listings/:id
 router.get('/:id', async (req, res) => {
   try {
-    const listing = await Listing.findById(req.params.id).populate('owner', 'name phone');
+    const listing = await Listing.findById(req.params.id).populate('owner', OWNER_FIELDS);
     if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
     res.json({ listing: publicListing(listing) });
   } catch (err) {
@@ -81,10 +88,18 @@ router.get('/:id', async (req, res) => {
 // POST /api/listings (creation, utilisateur connecte)
 router.post('/', requireAuth, async (req, res) => {
   try {
-    const { title, category, price, description, city, phone } = req.body;
+    const { title, category, price, description, city, phone, images } = req.body;
 
     if (!title || !category || price === undefined || !description || !city || !phone) {
       return res.status(400).json({ error: 'Tous les champs de l\'annonce sont requis.' });
+    }
+
+    const imagesArr = Array.isArray(images) ? images : [];
+    if (imagesArr.length > 6) {
+      return res.status(400).json({ error: 'Maximum 6 images par annonce.' });
+    }
+    if (IMAGE_REQUIRED_CATEGORIES.includes(category) && imagesArr.length < 3) {
+      return res.status(400).json({ error: `La categorie "${category}" demande au moins 3 photos.` });
     }
 
     const listing = await Listing.create({
@@ -94,6 +109,7 @@ router.post('/', requireAuth, async (req, res) => {
       description: description.trim(),
       city: city.trim(),
       phone: phone.trim(),
+      images: imagesArr,
       owner: req.userId
     });
 
@@ -116,7 +132,7 @@ router.put('/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Tu ne peux modifier que tes propres annonces.' });
     }
 
-    const fields = ['title', 'category', 'price', 'description', 'city', 'phone', 'status'];
+    const fields = ['title', 'category', 'price', 'description', 'city', 'phone', 'status', 'images'];
     fields.forEach((f) => {
       if (req.body[f] !== undefined) listing[f] = req.body[f];
     });

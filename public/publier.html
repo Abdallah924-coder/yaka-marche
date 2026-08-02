@@ -57,14 +57,21 @@
           <div class="field">
             <label>Catégorie</label>
             <select id="f-cat" required>
-              <option value="Services">Services</option>
-              <option value="Electronique">Électronique</option>
-              <option value="Mode">Mode</option>
-              <option value="Immobilier">Immobilier</option>
-              <option value="Vehicules">Véhicules</option>
-              <option value="Cours & Formation">Cours &amp; Formation</option>
-              <option value="Autre">Autre</option>
-            </select>
+  <option value="Services">Services</option>
+  <option value="Electronique">Électronique (min. 3 photos)</option>
+  <option value="Mode">Mode</option>
+  <option value="Immobilier">Immobilier (min. 3 photos)</option>
+  <option value="Vehicules">Véhicules</option>
+  <option value="Cours & Formation">Cours &amp; Formation</option>
+  <option value="Maison & Meubles">Maison &amp; Meubles</option>
+  <option value="Alimentation">Alimentation</option>
+  <option value="Beaute & Bien-etre">Beauté &amp; Bien-être</option>
+  <option value="Sport & Loisirs">Sport &amp; Loisirs</option>
+  <option value="Emploi">Emploi</option>
+  <option value="Bebe & Enfants">Bébé &amp; Enfants</option>
+  <option value="Agriculture & Elevage">Agriculture &amp; Élevage</option>
+  <option value="Autre">Autre</option>
+</select>
           </div>
           <div class="field">
             <label>Prix (FCFA)</label>
@@ -81,6 +88,15 @@
           <div class="field">
             <label>Numéro WhatsApp</label>
             <input type="text" id="f-phone" placeholder="Ex : 06 xxx xx xx" required>
+          </div>
+          <div class="field full">
+            <label>Photos <span id="images-hint" class="form-note"></span></label>
+            <div class="image-grid" id="image-grid">
+              <label class="image-add" id="image-add">
+                <input type="file" id="image-input" accept="image/*" multiple>
+                <span>+</span>
+              </label>
+            </div>
           </div>
           <div class="field full">
             <div class="form-error" id="form-error"></div>
@@ -114,6 +130,60 @@ if (phoneField && user && user.phone) phoneField.value = user.phone;
 const cityField = document.getElementById('f-city');
 if (cityField && user && user.city) cityField.value = user.city;
 
+const IMAGE_REQUIRED_CATEGORIES = ['Immobilier', 'Electronique'];
+let listingImages = [];
+
+function updateImagesHint() {
+  const cat = document.getElementById('f-cat').value;
+  const hint = document.getElementById('images-hint');
+  const required = IMAGE_REQUIRED_CATEGORIES.includes(cat);
+  hint.textContent = required
+    ? `(${listingImages.length}/3 minimum requises pour cette catégorie)`
+    : `(${listingImages.length}/6, optionnel)`;
+}
+
+function renderImageGrid() {
+  const grid = document.getElementById('image-grid');
+  const addSlot = document.getElementById('image-add');
+  grid.querySelectorAll('.image-slot').forEach(el => el.remove());
+
+  listingImages.forEach((src, i) => {
+    const slot = document.createElement('div');
+    slot.className = 'image-slot';
+    slot.innerHTML = `<img src="${src}"><button type="button" data-remove="${i}">✕</button>`;
+    grid.insertBefore(slot, addSlot);
+  });
+
+  addSlot.classList.toggle('hidden', listingImages.length >= 6);
+
+  grid.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      listingImages.splice(Number(btn.dataset.remove), 1);
+      renderImageGrid();
+      updateImagesHint();
+    });
+  });
+
+  updateImagesHint();
+}
+
+document.getElementById('image-input').addEventListener('change', async (e) => {
+  const files = Array.from(e.target.files).slice(0, 6 - listingImages.length);
+  for (const file of files) {
+    try {
+      const compressed = await compressImage(file);
+      listingImages.push(compressed);
+    } catch (err) {
+      console.error('Erreur image:', err);
+      showToast(err.message || 'Une image n\'a pas pu être chargée.', true);
+    }
+  }
+  e.target.value = '';
+  renderImageGrid();
+});
+
+renderImageGrid();
+
 const form = document.getElementById('post-form');
 if (form) {
   form.addEventListener('submit', async (e) => {
@@ -121,6 +191,13 @@ if (form) {
     const errorEl = document.getElementById('form-error');
     const btn = document.getElementById('submit-btn');
     errorEl.textContent = '';
+
+    const cat = document.getElementById('f-cat').value;
+    if (IMAGE_REQUIRED_CATEGORIES.includes(cat) && listingImages.length < 3) {
+      errorEl.textContent = `La catégorie "${cat}" demande au moins 3 photos.`;
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Publication en cours...';
 
@@ -129,15 +206,16 @@ if (form) {
         method: 'POST',
         body: JSON.stringify({
           title: document.getElementById('f-title').value.trim(),
-          category: document.getElementById('f-cat').value,
+          category: cat,
           price: Number(document.getElementById('f-price').value),
           description: document.getElementById('f-desc').value.trim(),
           city: document.getElementById('f-city').value.trim(),
-          phone: document.getElementById('f-phone').value.trim()
+          phone: document.getElementById('f-phone').value.trim(),
+          images: listingImages
         })
       });
       showToast('Annonce publiée !');
-      window.location.href = 'annonce.html?id=' + data.listing.id;
+      window.location.href = '/annonce?id=' + data.listing.id;
     } catch (err) {
       errorEl.textContent = err.message;
       btn.disabled = false;

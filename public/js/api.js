@@ -60,6 +60,50 @@ function formatPrice(n) {
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR');
 }
+// Rend un petit widget etoiles en HTML (lecture seule), utilisable partout.
+function renderStars(avg, count) {
+  avg = Number(avg) || 0;
+  const rounded = Math.round(avg);
+  let stars = '<span class="stars">';
+  for (let i = 1; i <= 5; i++) {
+    stars += `<span class="star${i <= rounded ? ' filled' : ''}">★</span>`;
+  }
+  stars += '</span>';
+  if (count !== undefined) {
+    stars += ` <span class="rating-line"><b>${avg > 0 ? avg.toFixed(1) : '—'}</b>${count > 0 ? ' (' + count + ' avis)' : ' (aucun avis)'}</span>`;
+  }
+  return stars;
+}
+
+// Redimensionne et compresse une image cote client avant envoi (evite des
+// documents MongoDB trop lourds avec plusieurs photos par annonce).
+function compressImage(file, maxSize = 1000, quality = 0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Lecture du fichier impossible.'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Image illisible.'));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxSize) {
+          height = Math.round(height * (maxSize / width));
+          width = maxSize;
+        } else if (height > maxSize) {
+          width = Math.round(width * (maxSize / height));
+          height = maxSize;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 function showToast(msg, isError) {
   let el = document.getElementById('toast');

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Connexion — Yaka Marché</title>
+<title>Mot de passe oublié — Yaka Marché</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
@@ -33,29 +33,23 @@
 
 <section>
   <div class="container">
-    <div class="panel panel-narrow">
-      <h2 style="margin-bottom:8px;">Connexion</h2>
-      <p class="form-note" style="margin-bottom:28px;">Retrouve tes annonces et ton tableau de bord.</p>
+    <div class="panel panel-narrow" id="panel">
+      <h2 style="margin-bottom:8px;">Mot de passe oublié</h2>
+      <p class="form-note" style="margin-bottom:28px;">
+        Indique ton email, on t'envoie un lien pour choisir un nouveau mot de passe.
+      </p>
 
-      <form id="login-form">
+      <form id="forgot-form">
         <div class="field" style="margin-bottom:16px;">
           <label>Email</label>
           <input type="email" id="f-email" required>
         </div>
-        <div class="field" style="margin-bottom:8px;">
-          <label>Mot de passe</label>
-          <input type="password" id="f-password" required>
-        </div>
         <div class="form-error" id="form-error"></div>
-        <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Se connecter</button>
+        <button type="submit" class="btn btn-primary btn-block" id="submit-btn">Envoyer le lien</button>
       </form>
 
-      <p class="form-note" style="margin-top:16px; text-align:center;">
-        <a href="/mot-de-passe-oublie" style="color:var(--yellow);">Mot de passe oublié ?</a>
-      </p>
-
-      <p class="form-note" style="margin-top:8px; text-align:center;">
-        Pas encore de compte ? <a href="/inscription" style="color:var(--yellow);">S'inscrire</a>
+      <p class="form-note" style="margin-top:20px; text-align:center;">
+        <a href="/connexion" style="color:var(--yellow);">Retour à la connexion</a>
       </p>
     </div>
   </div>
@@ -64,34 +58,36 @@
 <footer>
   <div class="container inner">
     <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
-    <div class="credit">Un produit WORLDIFYAI </div>
+    <div class="credit">Un produit WORLDIFYAI — by Devoué</div>
   </div>
 </footer>
 
 <script src="js/api.js"></script>
 <script>
-document.getElementById('login-form').addEventListener('submit', async (e) => {
+document.getElementById('forgot-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const errorEl = document.getElementById('form-error');
   const btn = document.getElementById('submit-btn');
   errorEl.textContent = '';
   btn.disabled = true;
-  btn.textContent = 'Connexion...';
+  btn.textContent = 'Envoi en cours...';
 
   try {
-    const data = await apiFetch('/auth/login', {
+    await apiFetch('/auth/forgot-password', {
       method: 'POST',
-      body: JSON.stringify({
-        email: document.getElementById('f-email').value.trim(),
-        password: document.getElementById('f-password').value
-      })
+      body: JSON.stringify({ email: document.getElementById('f-email').value.trim() })
     });
-    setSession(data.token, data.user);
-    window.location.href = 'tableau-de-bord.html';
+
+    document.getElementById('panel').innerHTML = `
+      <h2 style="margin-bottom:10px;">Email envoyé </h2>
+      <p class="form-note">Si un compte existe avec cette adresse, un lien de réinitialisation vient d'être envoyé.
+      Vérifie aussi tes spams.</p>
+      <a href="/connexion" class="btn btn-outline" style="margin-top:20px;">Retour à la connexion</a>
+    `;
   } catch (err) {
     errorEl.textContent = err.message;
     btn.disabled = false;
-    btn.textContent = 'Se connecter';
+    btn.textContent = 'Envoyer le lien';
   }
 });
 </script>

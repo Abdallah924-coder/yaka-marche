@@ -59,24 +59,71 @@ async function loadListing() {
   try {
     const data = await apiFetch('/listings/' + id);
     const l = data.listing;
+    const images = l.images && l.images.length ? l.images : [];
+
     contentEl.innerHTML = `
       <div class="panel" style="max-width:640px; margin:0 auto;">
+        ${images.length ? `
+          <div class="carousel" id="carousel" style="margin-bottom:22px;">
+            <div class="carousel-track" id="carousel-track">
+              ${images.map(src => `<img src="${src}" alt="">`).join('')}
+            </div>
+            ${images.length > 1 ? `
+              <button class="carousel-arrow prev" id="carousel-prev">‹</button>
+              <button class="carousel-arrow next" id="carousel-next">›</button>
+              <div class="carousel-dots" id="carousel-dots">
+                ${images.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
         <span class="cat-pill">${l.category}</span>
         <h2 style="margin:16px 0 6px;">${l.title}</h2>
-        <div class="price mono" style="font-size:1.5rem; margin-bottom:18px;">${formatPrice(l.price)}</div>
+        <div class="price mono" style="font-size:1.5rem; margin-bottom:14px;">${formatPrice(l.price)}</div>
         <p style="color:var(--ink-muted); margin-bottom:20px;">${l.description}</p>
-        <div class="meta" style="margin-bottom:24px;">
+        <div class="meta" style="margin-bottom:10px;">
           ${l.city} · publié le ${formatDate(l.createdAt)}
-          ${l.owner && l.owner.name ? ' · par ' + l.owner.name : ''}
         </div>
+        ${l.owner ? `
+          <a href="/annonceur?id=${l.owner.id}" style="display:block; margin-bottom:22px;">
+            <div class="rating-line">Vendu par <b>${l.owner.name}</b> · ${renderStars(l.owner.ratingAvg, l.owner.ratingCount)}</div>
+          </a>
+        ` : ''}
         <a class="btn btn-whatsapp btn-block" href="${waLink(l.phone, l.title)}" target="_blank" rel="noopener">
           Contacter sur WhatsApp
         </a>
       </div>
     `;
+
+    if (images.length > 1) initCarousel(images.length);
   } catch (err) {
     contentEl.innerHTML = '<div class="empty">Cette annonce n\'existe plus ou a été retirée.</div>';
   }
+}
+
+function initCarousel(count) {
+  const track = document.getElementById('carousel-track');
+  const dots = document.querySelectorAll('#carousel-dots span');
+  let index = 0;
+  let startX = null;
+
+  function goTo(i) {
+    index = (i + count) % count;
+    track.style.transform = `translateX(-${index * 100}%)`;
+    dots.forEach((d, di) => d.classList.toggle('active', di === index));
+  }
+
+  document.getElementById('carousel-prev').addEventListener('click', () => goTo(index - 1));
+  document.getElementById('carousel-next').addEventListener('click', () => goTo(index + 1));
+
+  const carousel = document.getElementById('carousel');
+  carousel.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+  carousel.addEventListener('touchend', (e) => {
+    if (startX === null) return;
+    const delta = e.changedTouches[0].clientX - startX;
+    if (Math.abs(delta) > 40) goTo(delta < 0 ? index + 1 : index - 1);
+    startX = null;
+  });
 }
 
 loadListing();

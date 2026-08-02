@@ -126,6 +126,27 @@ function boostApprovedEmail(user, listingTitle) {
     `
   });
 }
+function resetPasswordEmail(user, resetLink) {
+  return sendEmail({
+    to: user.email,
+    toName: user.name,
+    subject: 'Reinitialisation de ton mot de passe Yaka Marche',
+    htmlContent: `
+      <div style="font-family:sans-serif; padding:24px; color:#111;">
+        <h2>Reinitialiser ton mot de passe</h2>
+        <p>Tu as demande a reinitialiser le mot de passe de ton compte Yaka Marche.
+        Clique sur le lien ci-dessous (valable 1 heure) :</p>
+        <p style="margin:20px 0;">
+          <a href="${resetLink}" style="background:#FFD43B; color:#141200; padding:12px 22px;
+          border-radius:8px; text-decoration:none; font-weight:600;">Choisir un nouveau mot de passe</a>
+        </p>
+        <p style="color:#888; font-size:13px;">Si tu n'es pas a l'origine de cette demande, ignore cet email :
+        ton mot de passe actuel reste inchange.</p>
+        ${footer()}
+      </div>
+    `
+  });
+}
 
 module.exports = {
   sendEmail,
@@ -133,5 +154,6 @@ module.exports = {
   loginAlertEmail,
   listingPublishedEmail,
   boostPendingEmail,
-  boostApprovedEmail
+  boostApprovedEmail,
+  resetPasswordEmail
 };

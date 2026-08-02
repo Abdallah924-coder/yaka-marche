@@ -1,9 +1,10 @@
 const express = require('express');
+const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { requireAuth } = require('../middleware/auth');
-const { welcomeEmail, loginAlertEmail } = require('../utils/brevo');
+const { welcomeEmail, loginAlertEmail, resetPasswordEmail } = require('../utils/brevo');
 
 const router = express.Router();
 
@@ -97,6 +98,70 @@ router.get('/me', requireAuth, async (req, res) => {
     const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'Utilisateur introuvable.' });
     res.json({ user: publicUser(user) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// POST /api/auth/forgot-password
+// Ne revele jamais si l'email existe ou non (reponse identique dans les deux cas).
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email requis.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    if (user) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+      user.resetTokenHash = tokenHash;
+      user.resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 heure
+      await user.save();
+
+      const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
+      const resetLink = `${appUrl}/reinitialiser-mot-de-passe?token=${rawToken}`;
+      resetPasswordEmail(user, resetLink).catch(() => {});
+    }
+
+    res.json({ ok: true, message: 'Si ce compte existe, un email de reinitialisation a ete envoye.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Lien invalide ou mot de passe manquant.' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Le mot de passe doit faire au moins 6 caracteres.' });
+    }
+
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetTokenHash: tokenHash,
+      resetTokenExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Ce lien de reinitialisation est invalide ou a expire.' });
+    }
+
+    user.passwordHash = await bcrypt.hash(password, 10);
+    user.resetTokenHash = null;
+    user.resetTokenExpires = null;
+    await user.save();
+
+    res.json({ ok: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur.' });

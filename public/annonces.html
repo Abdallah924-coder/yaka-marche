@@ -47,15 +47,22 @@
       </select>
     </div>
     <div class="toolbar" id="cat-chips">
-      <button class="chip active" data-cat="Toutes">Toutes</button>
-      <button class="chip" data-cat="Services">Services</button>
-      <button class="chip" data-cat="Electronique">Électronique</button>
-      <button class="chip" data-cat="Mode">Mode</button>
-      <button class="chip" data-cat="Immobilier">Immobilier</button>
-      <button class="chip" data-cat="Vehicules">Véhicules</button>
-      <button class="chip" data-cat="Cours & Formation">Cours</button>
-      <button class="chip" data-cat="Autre">Autre</button>
-    </div>
+  <button class="chip active" data-cat="Toutes">Toutes</button>
+  <button class="chip" data-cat="Services">Services</button>
+  <button class="chip" data-cat="Electronique">Électronique</button>
+  <button class="chip" data-cat="Mode">Mode</button>
+  <button class="chip" data-cat="Immobilier">Immobilier</button>
+  <button class="chip" data-cat="Vehicules">Véhicules</button>
+  <button class="chip" data-cat="Cours & Formation">Cours</button>
+  <button class="chip" data-cat="Maison & Meubles">Maison</button>
+  <button class="chip" data-cat="Alimentation">Alimentation</button>
+  <button class="chip" data-cat="Beaute & Bien-etre">Beauté</button>
+  <button class="chip" data-cat="Sport & Loisirs">Sport</button>
+  <button class="chip" data-cat="Emploi">Emploi</button>
+  <button class="chip" data-cat="Bebe & Enfants">Bébé</button>
+  <button class="chip" data-cat="Agriculture & Elevage">Agriculture</button>
+  <button class="chip" data-cat="Autre">Autre</button>
+</div>
 
     <div class="listings" id="listings">
       <div class="loading">Chargement des annonces...</div>
@@ -102,15 +109,19 @@ function renderListings(listings) {
   }
 
   listEl.innerHTML = listings.map(l => `
-    <a class="card ${l.featured ? 'featured' : ''}" href="annonce.html?id=${l.id}">
-      ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
-      <span class="cat-pill">${l.category}</span>
-      <h3>${l.title}</h3>
-      <div class="desc">${l.description}</div>
-      <div class="price mono">${formatPrice(l.price)}</div>
-      <div class="meta">${l.city} · publié le ${formatDate(l.createdAt)}</div>
-    </a>
-  `).join('');
+  <a class="card ${l.featured ? 'featured' : ''}" href="/annonce?id=${l.id}">
+    ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
+    <div class="card-thumb">
+      ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="">` : 'Pas de photo'}
+    </div>
+    <span class="cat-pill">${l.category}</span>
+    <h3>${l.title}</h3>
+    <div class="desc">${l.description}</div>
+    <div class="price mono">${formatPrice(l.price)}</div>
+    ${l.owner ? renderStars(l.owner.ratingAvg, l.owner.ratingCount) : ''}
+    <div class="meta">${l.city} · publié le ${formatDate(l.createdAt)}</div>
+  </a>
+`).join('');
 }
 
 document.getElementById('search').addEventListener('input', () => {

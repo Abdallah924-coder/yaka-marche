@@ -6,6 +6,10 @@ const userSchema = new mongoose.Schema({
   phone: { type: String, required: true, trim: true },
   city: { type: String, trim: true, default: '' },
   passwordHash: { type: String, required: true },
+  ratingAvg: { type: Number, default: 0 },
+  ratingCount: { type: Number, default: 0 },
+  resetTokenHash: { type: String, default: null },
+  resetTokenExpires: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 
