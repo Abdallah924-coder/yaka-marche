@@ -117,7 +117,11 @@ function render(data) {
 
   const formWrap = document.getElementById('review-form-wrap');
   if (isSelf) {
-    formWrap.innerHTML = '';
+    formWrap.innerHTML = `
+      <div class="panel" style="text-align:center;">
+        <p class="form-note">C'est ton profil public — tu ne peux pas te noter toi-même.</p>
+      </div>
+    `;
   } else if (!getToken()) {
     formWrap.innerHTML = `
       <div class="panel" style="text-align:center;">

@@ -85,8 +85,13 @@ async function loadListing() {
           ${l.city} · publié le ${formatDate(l.createdAt)}
         </div>
         ${l.owner ? `
-          <a href="/annonceur?id=${l.owner.id}" style="display:block; margin-bottom:22px;">
-            <div class="rating-line">Vendu par <b>${l.owner.name}</b> · ${renderStars(l.owner.ratingAvg, l.owner.ratingCount)}</div>
+          <a href="/annonceur?id=${l.owner.id}" class="panel" style="display:flex; align-items:center;
+             justify-content:space-between; gap:12px; margin-bottom:22px; padding:16px 20px;">
+            <div>
+              <div style="font-weight:600; margin-bottom:4px;">${l.owner.name}</div>
+              ${renderStars(l.owner.ratingAvg, l.owner.ratingCount)}
+            </div>
+            <span class="btn btn-outline btn-sm">Voir le profil →</span>
           </a>
         ` : ''}
         <a class="btn btn-whatsapp btn-block" href="${waLink(l.phone, l.title)}" target="_blank" rel="noopener">
