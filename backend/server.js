@@ -22,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/sellers', sellerRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'yaka-marche-backend' });
