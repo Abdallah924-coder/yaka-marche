@@ -42,6 +42,9 @@ const listingSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   featured: { type: Boolean, default: false },
   status: { type: String, enum: ['active', 'vendu', 'archive'], default: 'active' },
+  views: { type: Number, default: 0 },
+  sortDate: { type: Date, default: Date.now }, // date de tri = date de creation, avancee a chaque relance
+  lastBumpedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

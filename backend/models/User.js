@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   ratingCount: { type: Number, default: 0 },
   resetTokenHash: { type: String, default: null },
   resetTokenExpires: { type: Date, default: null },
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Listing' }],
   createdAt: { type: Date, default: Date.now }
 });
 

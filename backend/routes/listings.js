@@ -30,6 +30,8 @@ function publicListing(listing) {
     images: listing.images || [],
     featured: listing.featured,
     status: listing.status,
+    views: listing.views || 0,
+    lastBumpedAt: listing.lastBumpedAt,
     createdAt: listing.createdAt,
     ownerId: listing.owner && listing.owner._id ? listing.owner._id : listing.owner,
     owner
@@ -53,7 +55,7 @@ router.get('/', async (req, res) => {
 
     if (sort === 'price_asc') query = query.sort({ featured: -1, price: 1 });
     else if (sort === 'price_desc') query = query.sort({ featured: -1, price: -1 });
-    else query = query.sort({ featured: -1, createdAt: -1 });
+    else query = query.sort({ featured: -1, sortDate: -1 });
 
     const listings = await query.limit(200);
     res.json({ listings: listings.map(publicListing) });
@@ -77,7 +79,11 @@ router.get('/mine', requireAuth, async (req, res) => {
 // GET /api/listings/:id
 router.get('/:id', async (req, res) => {
   try {
-    const listing = await Listing.findById(req.params.id).populate('owner', OWNER_FIELDS);
+    const listing = await Listing.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } },
+      { new: true }
+    ).populate('owner', OWNER_FIELDS);
     if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
     res.json({ listing: publicListing(listing) });
   } catch (err) {
@@ -162,8 +168,66 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
-// NOTE : la mise en avant ("featured") ne se fait plus directement ici.
-// Voir routes/payments.js : le vendeur envoie une preuve de paiement,
-// et c'est l'administrateur qui valide et active le boost.
+const BUMP_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 fois par semaine
+
+// POST /api/listings/:id/bump
+// Relance gratuite : fait remonter l'annonce en haut du tri "plus recentes",
+// une fois par semaine maximum.
+router.post('/:id/bump', requireAuth, async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
+    if (String(listing.owner) !== String(req.userId)) {
+      return res.status(403).json({ error: 'Tu ne peux relancer que tes propres annonces.' });
+    }
+
+    const last = listing.lastBumpedAt || listing.createdAt;
+    const elapsed = Date.now() - new Date(last).getTime();
+
+    if (elapsed < BUMP_COOLDOWN_MS) {
+      const nextBumpAt = new Date(new Date(last).getTime() + BUMP_COOLDOWN_MS);
+      return res.status(429).json({
+        error: 'Tu as deja relance cette annonce cette semaine.',
+        nextBumpAt
+      });
+    }
+
+    listing.sortDate = new Date();
+    listing.lastBumpedAt = new Date();
+    await listing.save();
+
+    res.json({ listing: publicListing(listing) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// POST /api/listings/:id/favorite
+// Ajoute/retire l'annonce des favoris de l'utilisateur connecte (bascule).
+router.post('/:id/favorite', requireAuth, async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
+
+    const user = await User.findById(req.userId);
+    const idx = user.favorites.findIndex((f) => String(f) === String(listing._id));
+    let favorited;
+
+    if (idx === -1) {
+      user.favorites.push(listing._id);
+      favorited = true;
+    } else {
+      user.favorites.splice(idx, 1);
+      favorited = false;
+    }
+
+    await user.save();
+    res.json({ favorited });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
 
 module.exports = router;

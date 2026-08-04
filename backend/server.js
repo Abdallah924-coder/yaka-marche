@@ -10,11 +10,12 @@ const listingRoutes = require('./routes/listings');
 const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 const sellerRoutes = require('./routes/sellers');
+const favoriteRoutes = require('./routes/favorites');
 
 const app = express();
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-// Limite relevee pour accepter les captures d'ecran de paiement en base64
+// Limite relevee pour accepter plusieurs images d'annonce + captures d'ecran en base64
 app.use(express.json({ limit: '15mb' }));
 
 // --- API ---
@@ -23,6 +24,7 @@ app.use('/api/listings', listingRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sellers', sellerRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'yaka-marche-backend' });
