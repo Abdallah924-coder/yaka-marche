@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mes favoris — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/favoris" data-auth="user">Favoris</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container">
+    <div class="section-head">
+      <h2>Mes favoris</h2>
+      <p>Les annonces que tu as enregistrées.</p>
+    </div>
+    <div class="listings" id="listings"><div class="loading">Chargement...</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI — by Devoué</div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+requireAuth();
+
+async function load() {
+  const listEl = document.getElementById('listings');
+  try {
+    const data = await apiFetch('/favorites');
+    render(data.listings);
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty">' + err.message + '</div>';
+  }
+}
+
+function render(listings) {
+  const listEl = document.getElementById('listings');
+  if (!listings.length) {
+    listEl.innerHTML = '<div class="empty">Aucun favori pour l\'instant. Parcours les <a href="/annonces" style="color:var(--yellow);">annonces</a> et clique sur le cœur.</div>';
+    return;
+  }
+
+  listEl.innerHTML = listings.map(l => `
+    <a class="card ${l.featured ? 'featured' : ''}" href="/annonce?id=${l.id}">
+      ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
+      ${isNew(l.createdAt) ? '<div class="new-tag">Nouveau</div>' : ''}
+      <button class="heart-btn active" data-fav="${l.id}">♥</button>
+      <div class="card-thumb">
+        ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="">` : 'Pas de photo'}
+      </div>
+      <span class="cat-pill">${l.category}</span>
+      <h3>${l.title}</h3>
+      <div class="price mono">${formatPrice(l.price)}</div>
+      ${l.owner ? renderStars(l.owner.ratingAvg, l.owner.ratingCount) : ''}
+      <div class="meta">${l.city}</div>
+    </a>
+  `).join('');
+
+  listEl.querySelectorAll('[data-fav]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        await toggleFavorite(btn.dataset.fav);
+        load();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  });
+}
+
+load();
+</script>
+</body>
+</html>

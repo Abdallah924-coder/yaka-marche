@@ -19,6 +19,7 @@
       <a href="/">Accueil</a>
       <a href="/annonces">Annonces</a>
       <a href="/publier">Publier</a>
+      <a href="/favoris" data-auth="user">Favoris</a>
       <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
       <a href="/admin" data-auth="admin" class="hidden">Admin</a>
     </div>
@@ -56,7 +57,7 @@
 <footer>
   <div class="container inner">
     <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
-    <div class="credit">Un produit WORLDIFYAI </div>
+    <div class="credit">Un produit WORLDIFYAI — by Devoué</div>
   </div>
 </footer>
 
@@ -74,6 +75,11 @@ async function loadMine() {
   }
 }
 
+function nextBumpDate(l) {
+  const last = l.lastBumpedAt || l.createdAt;
+  return new Date(new Date(last).getTime() + 7 * 24 * 60 * 60 * 1000);
+}
+
 function renderRows(listings) {
   const rowsEl = document.getElementById('rows');
   document.getElementById('stat-total').textContent = listings.length;
@@ -84,23 +90,43 @@ function renderRows(listings) {
     return;
   }
 
-  rowsEl.innerHTML = listings.map(l => `
+  rowsEl.innerHTML = listings.map(l => {
+    const nextBump = nextBumpDate(l);
+    const canBump = nextBump <= new Date();
+    return `
     <div class="dash-row" data-id="${l.id}">
       <div class="info">
         <h4>${l.title} ${l.featured ? '<span class="featured-tag" style="position:static; margin-left:8px;">En avant</span>' : ''}</h4>
-        <div class="meta">${formatPrice(l.price)} · ${l.city} · publié le ${formatDate(l.createdAt)}</div>
+        <div class="meta">${formatPrice(l.price)} · ${l.city} · ${l.views || 0} vue${(l.views || 0) > 1 ? 's' : ''} · publié le ${formatDate(l.createdAt)}</div>
       </div>
       <div class="actions">
         <a class="btn btn-outline btn-sm" href="/annonce?id=${l.id}">Voir</a>
-        ${!l.featured ? `<a class="btn btn-leather btn-sm" href="mise-en-avant.html?id=${l.id}">Mettre en avant · 500 FCFA</a>` : ''}
+        ${canBump
+          ? `<button class="btn btn-outline btn-sm" data-bump="${l.id}">Relancer</button>`
+          : `<span class="btn btn-outline btn-sm" style="opacity:0.5; cursor:default;">Relance dispo le ${formatDate(nextBump)}</span>`}
+        ${!l.featured ? `<a class="btn btn-leather btn-sm" href="/mise-en-avant?id=${l.id}">Mettre en avant · 500 FCFA</a>` : ''}
         <button class="btn btn-danger btn-sm" data-delete="${l.id}">Supprimer</button>
       </div>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   rowsEl.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', () => deleteListing(btn.dataset.delete));
   });
+  rowsEl.querySelectorAll('[data-bump]').forEach(btn => {
+    btn.addEventListener('click', () => bumpListing(btn.dataset.bump));
+  });
+}
+
+async function bumpListing(id) {
+  try {
+    await apiFetch('/listings/' + id + '/bump', { method: 'POST' });
+    showToast('Annonce relancée en haut de la liste.');
+    loadMine();
+  } catch (err) {
+    showToast(err.message, true);
+  }
 }
 
 async function deleteListing(id) {

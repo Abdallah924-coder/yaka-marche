@@ -105,6 +105,29 @@ function compressImage(file, maxSize = 1000, quality = 0.72) {
   });
 }
 
+// Renvoie l'ensemble des IDs d'annonces favorites de l'utilisateur connecte
+// (vide si non connecte ou en cas d'erreur reseau).
+async function getFavoriteIds() {
+  if (!getToken()) return new Set();
+  try {
+    const data = await apiFetch('/favorites/ids');
+    return new Set(data.ids);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+// Bascule le statut favori d'une annonce, renvoie le nouvel etat.
+async function toggleFavorite(listingId) {
+  const data = await apiFetch('/listings/' + listingId + '/favorite', { method: 'POST' });
+  return data.favorited;
+}
+
+// Une annonce publiee il y a moins de 24h est consideree "Nouveau".
+function isNew(createdAt) {
+  return (Date.now() - new Date(createdAt).getTime()) < 24 * 60 * 60 * 1000;
+}
+
 function showToast(msg, isError) {
   let el = document.getElementById('toast');
   if (!el) {

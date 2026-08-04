@@ -19,6 +19,7 @@
       <a href="/">Accueil</a>
       <a href="/annonces">Annonces</a>
       <a href="/publier">Publier</a>
+      <a href="/favoris" data-auth="user">Favoris</a>
       <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
       <a href="/admin" data-auth="admin" class="hidden">Admin</a>
     </div>
@@ -57,9 +58,11 @@ async function loadListing() {
   }
 
   try {
-    const data = await apiFetch('/listings/' + id);
+const data = await apiFetch('/listings/' + id);
     const l = data.listing;
     const images = l.images && l.images.length ? l.images : [];
+    const favIds = await getFavoriteIds();
+    const favorited = favIds.has(l.id);
 
     contentEl.innerHTML = `
       <div class="panel" style="max-width:640px; margin:0 auto;">
@@ -77,9 +80,16 @@ async function loadListing() {
             ` : ''}
           </div>
         ` : ''}
-        <span class="cat-pill">${l.category}</span>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span class="cat-pill">${l.category}</span>
+          ${isNew(l.createdAt) ? '<span class="badge badge-new">Nouveau</span>' : ''}
+        </div>
         <h2 style="margin:16px 0 6px;">${l.title}</h2>
-        <div class="price mono" style="font-size:1.5rem; margin-bottom:14px;">${formatPrice(l.price)}</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px;">
+          <div class="price mono" style="font-size:1.5rem;">${formatPrice(l.price)}</div>
+          <button class="btn btn-outline btn-sm" id="fav-btn">${favorited ? '♥ Enregistré' : '♡ Enregistrer'}</button>
+        </div>
+        <div class="views-line" style="margin-bottom:16px;">${l.views || 0} vue${(l.views || 0) > 1 ? 's' : ''}</div>
         <p style="color:var(--ink-muted); margin-bottom:20px;">${l.description}</p>
         <div class="meta" style="margin-bottom:10px;">
           ${l.city} · publié le ${formatDate(l.createdAt)}
@@ -99,6 +109,17 @@ async function loadListing() {
         </a>
       </div>
     `;
+
+    const favBtn = document.getElementById('fav-btn');
+    favBtn.addEventListener('click', async () => {
+      if (!getToken()) { window.location.href = '/connexion'; return; }
+      try {
+        const nowFavorited = await toggleFavorite(l.id);
+        favBtn.textContent = nowFavorited ? '♥ Enregistré' : '♡ Enregistrer';
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
 
     if (images.length > 1) initCarousel(images.length);
   } catch (err) {

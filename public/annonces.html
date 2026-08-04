@@ -19,6 +19,7 @@
       <a href="/">Accueil</a>
       <a href="/annonces">Annonces</a>
       <a href="/publier">Publier</a>
+      <a href="/favoris" data-auth="user">Favoris</a>
       <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
       <a href="/admin" data-auth="admin" class="hidden">Admin</a>
     </div>
@@ -81,6 +82,7 @@
 <script>
 let activeCat = 'Toutes';
 let searchTimer = null;
+let favoriteIds = new Set();
 
 async function loadListings() {
   const listEl = document.getElementById('listings');
@@ -109,19 +111,38 @@ function renderListings(listings) {
   }
 
   listEl.innerHTML = listings.map(l => `
-  <a class="card ${l.featured ? 'featured' : ''}" href="/annonce?id=${l.id}">
-    ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
-    <div class="card-thumb">
-      ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="">` : 'Pas de photo'}
-    </div>
-    <span class="cat-pill">${l.category}</span>
-    <h3>${l.title}</h3>
-    <div class="desc">${l.description}</div>
-    <div class="price mono">${formatPrice(l.price)}</div>
-    ${l.owner ? renderStars(l.owner.ratingAvg, l.owner.ratingCount) : ''}
-    <div class="meta">${l.city} · publié le ${formatDate(l.createdAt)}</div>
-  </a>
-`).join('');
+    <a class="card ${l.featured ? 'featured' : ''}" href="/annonce?id=${l.id}">
+      ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
+      ${isNew(l.createdAt) ? '<div class="new-tag">Nouveau</div>' : ''}
+      <button class="heart-btn ${favoriteIds.has(l.id) ? 'active' : ''}" data-fav="${l.id}">${favoriteIds.has(l.id) ? '♥' : '♡'}</button>
+      <div class="card-thumb">
+        ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="">` : 'Pas de photo'}
+      </div>
+      <span class="cat-pill">${l.category}</span>
+      <h3>${l.title}</h3>
+      <div class="desc">${l.description}</div>
+      <div class="price mono">${formatPrice(l.price)}</div>
+      ${l.owner ? renderStars(l.owner.ratingAvg, l.owner.ratingCount) : ''}
+      <div class="meta">${l.city} · publié le ${formatDate(l.createdAt)}</div>
+    </a>
+  `).join('');
+
+  listEl.querySelectorAll('[data-fav]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!getToken()) { window.location.href = '/connexion'; return; }
+      try {
+        const favorited = await toggleFavorite(btn.dataset.fav);
+        btn.classList.toggle('active', favorited);
+        btn.textContent = favorited ? '♥' : '♡';
+        if (favorited) favoriteIds.add(btn.dataset.fav);
+        else favoriteIds.delete(btn.dataset.fav);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  });
 }
 
 document.getElementById('search').addEventListener('input', () => {
@@ -139,7 +160,12 @@ document.querySelectorAll('#cat-chips .chip').forEach(chip => {
   });
 });
 
-loadListings();
+async function init() {
+  favoriteIds = await getFavoriteIds();
+  loadListings();
+}
+
+init();
 </script>
 </body>
 </html>
