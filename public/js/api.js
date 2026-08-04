@@ -60,6 +60,7 @@ function formatPrice(n) {
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('fr-FR');
 }
+
 // Rend un petit widget etoiles en HTML (lecture seule), utilisable partout.
 function renderStars(avg, count) {
   avg = Number(avg) || 0;
@@ -143,7 +144,7 @@ function showToast(msg, isError) {
   el._t = setTimeout(() => el.classList.remove('show'), 2600);
 }
 
-// Met a jour les liens de nav (Connexion/Inscription vs Tableau de bord/Deconnexion/Admin)
+// Met a jour les liens de nav (Connexion/Inscription vs Tableau de bord/Deconnexion)
 function renderNavAuthState() {
   const user = getUser();
   document.querySelectorAll('[data-auth="guest"]').forEach(el => {
@@ -168,8 +169,7 @@ function renderNavAuthState() {
 function initMobileNav() {
   const inner = document.querySelector('nav.topbar .inner');
   const links = document.querySelector('nav.topbar .nav-links');
-  const actions = document.querySelector('nav.topbar .nav-actions');
-  if (!inner || !links || !actions || inner.querySelector('.nav-hamburger')) return;
+  if (!inner || !links || inner.querySelector('.nav-hamburger')) return;
 
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -177,20 +177,17 @@ function initMobileNav() {
   btn.setAttribute('aria-label', 'Ouvrir le menu');
   btn.innerHTML = '<span></span><span></span><span></span>';
 
-  inner.insertBefore(btn, actions);
+  const actions = inner.querySelector('.nav-actions');
+  inner.insertBefore(btn, actions || null);
 
-  function toggle() {
+  btn.addEventListener('click', () => {
     const open = links.classList.toggle('mobile-open');
-    actions.classList.toggle('mobile-open', open);
     btn.classList.toggle('open', open);
-  }
+  });
 
-  btn.addEventListener('click', toggle);
-
-  [...links.querySelectorAll('a'), ...actions.querySelectorAll('a')].forEach(a => {
+  links.querySelectorAll('a').forEach(a => {
     a.addEventListener('click', () => {
       links.classList.remove('mobile-open');
-      actions.classList.remove('mobile-open');
       btn.classList.remove('open');
     });
   });

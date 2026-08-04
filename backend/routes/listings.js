@@ -10,7 +10,7 @@ const router = express.Router();
 
 const OWNER_FIELDS = 'name phone ratingAvg ratingCount';
 
-function publicListing(listing) {
+function publicListing(listing, opts = {}) {
   const owner = listing.owner && listing.owner.name ? {
     id: listing.owner._id,
     name: listing.owner.name,
@@ -18,6 +18,11 @@ function publicListing(listing) {
     ratingAvg: listing.owner.ratingAvg,
     ratingCount: listing.owner.ratingCount
   } : undefined;
+
+  const allImages = listing.images || [];
+  const images = opts.thumbnailOnly
+    ? (allImages[0] ? [allImages[0]] : [])
+    : allImages;
 
   return {
     id: listing._id,
@@ -27,7 +32,7 @@ function publicListing(listing) {
     description: listing.description,
     city: listing.city,
     phone: listing.phone,
-    images: listing.images || [],
+    images,
     featured: listing.featured,
     status: listing.status,
     views: listing.views || 0,
@@ -39,6 +44,7 @@ function publicListing(listing) {
 }
 
 // GET /api/listings?category=&search=&sort=recent|price_asc|price_desc
+// Par defaut, les annonces "featured" (mise en avant validee) apparaissent en premier.
 router.get('/', async (req, res) => {
   try {
     const { category, search, sort } = req.query;
@@ -167,6 +173,10 @@ router.delete('/:id', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Erreur serveur lors de la suppression.' });
   }
 });
+
+// NOTE : la mise en avant ("featured") ne se fait plus directement ici.
+// Voir routes/payments.js : le vendeur envoie une preuve de paiement,
+// et c'est l'administrateur qui valide et active le boost.
 
 const BUMP_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 fois par semaine
 
