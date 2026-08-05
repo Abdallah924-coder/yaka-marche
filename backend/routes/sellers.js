@@ -49,7 +49,7 @@ router.get('/:id', async (req, res) => {
         price: l.price,
         city: l.city,
         featured: l.featured,
-        images: l.images,
+        images: l.images && l.images[0] ? [l.images[0]] : [],
         createdAt: l.createdAt
       })),
       reviews: reviews.map((r) => ({

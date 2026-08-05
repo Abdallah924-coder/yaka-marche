@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
         category: l.category,
         price: l.price,
         city: l.city,
-        images: l.images,
+        images: l.images && l.images[0] ? [l.images[0]] : [],
         featured: l.featured,
         status: l.status,
         views: l.views || 0,

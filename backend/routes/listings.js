@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
     else query = query.sort({ featured: -1, sortDate: -1 });
 
     const listings = await query.limit(200);
-    res.json({ listings: listings.map(publicListing) });
+    res.json({ listings: listings.map((l) => publicListing(l, { thumbnailOnly: true })) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur lors du chargement des annonces.' });
@@ -75,7 +75,7 @@ router.get('/', async (req, res) => {
 router.get('/mine', requireAuth, async (req, res) => {
   try {
     const listings = await Listing.find({ owner: req.userId }).sort({ createdAt: -1 });
-    res.json({ listings: listings.map(publicListing) });
+    res.json({ listings: listings.map((l) => publicListing(l, { thumbnailOnly: true })) });;
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur.' });
