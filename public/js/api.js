@@ -118,6 +118,43 @@ async function getFavoriteIds() {
   }
 }
 
+// Enable lazy loading for images (improves performance and SEO)
+function initLazyLoading() {
+  if ('IntersectionObserver' in window) {
+    const imageObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+            imageObserver.unobserve(img);
+          }
+        }
+      });
+    });
+
+    document.querySelectorAll('img[data-src]').forEach((img) => {
+      imageObserver.observe(img);
+    });
+  }
+}
+
+// Add missing alt tags and improve accessibility
+function improveAccessibility() {
+  document.querySelectorAll('img:not([alt])').forEach((img) => {
+    const alt = img.title || img.alt || 'Image';
+    img.setAttribute('alt', alt);
+  });
+
+  // Ensure all images are loading lazy by default
+  document.querySelectorAll('img').forEach((img) => {
+    if (!img.hasAttribute('loading')) {
+      img.setAttribute('loading', 'lazy');
+    }
+  });
+}
+
 // Bascule le statut favori d'une annonce, renvoie le nouvel etat.
 async function toggleFavorite(listingId) {
   const data = await apiFetch('/listings/' + listingId + '/favorite', { method: 'POST' });
@@ -219,6 +256,8 @@ function initPage() {
   renderNavAuthState();
   initMobileNav();
   refreshUserIfNeeded();
+  initLazyLoading();
+  improveAccessibility();
 }
 
 // Execution immediate (le script est charge apres la nav dans le HTML, donc

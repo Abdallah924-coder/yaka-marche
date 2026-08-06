@@ -191,6 +191,18 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: `La categorie "${category}" demande au moins 3 photos.` });
     }
 
+    // Server-side image validation: images must be data URLs and not too large.
+    const MAX_IMAGE_BYTES = 1_200_000; // ~1.2 MB per image raw
+    for (const img of imagesArr) {
+      if (typeof img !== 'string' || !img.startsWith('data:image/')) {
+        return res.status(400).json({ error: 'Chaque image doit etre une Data URL (image).' });
+      }
+      // base64 expands ~4/3; compare on length with margin
+      if (img.length > Math.floor(MAX_IMAGE_BYTES * 1.4)) {
+        return res.status(400).json({ error: 'Une des images est trop lourde. Redimensionne/comprime-la.' });
+      }
+    }
+
     const listing = await Listing.create({
       title: title.trim(),
       category,
@@ -225,6 +237,21 @@ router.put('/:id', requireAuth, async (req, res) => {
     fields.forEach((f) => {
       if (req.body[f] !== undefined) listing[f] = req.body[f];
     });
+
+    // If images were provided on update, validate them server-side as well.
+    if (req.body.images !== undefined) {
+      const imagesArr = Array.isArray(req.body.images) ? req.body.images : [];
+      const MAX_IMAGE_BYTES = 1_200_000;
+      for (const img of imagesArr) {
+        if (typeof img !== 'string' || !img.startsWith('data:image/')) {
+          return res.status(400).json({ error: 'Chaque image doit etre une Data URL (image).' });
+        }
+        if (img.length > Math.floor(MAX_IMAGE_BYTES * 1.4)) {
+          return res.status(400).json({ error: 'Une des images est trop lourde. Redimensionne/comprime-la.' });
+        }
+      }
+      listing.images = imagesArr;
+    }
 
     await listing.save();
     res.json({ listing: publicListing(listing) });

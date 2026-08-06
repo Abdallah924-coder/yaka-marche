@@ -102,4 +102,109 @@ Le plus simple : un seul service Node (le backend sert aussi les pages HTML).
 
 ---
 
+Je veux que tu réalises une optimisation SEO complète et professionnelle de mon projet Yaka Marché.
+
+Contexte du projet :
+- Frontend : HTML, CSS, JavaScript (sans framework)
+- Backend : Node.js + Express
+- Hébergement : Render
+- Domaine : https://yaka-marche.xyz
+
+⚠️ Important :
+- Ne casse aucune fonctionnalité existante.
+- Conserve l'architecture actuelle.
+- N'effectue aucun changement inutile.
+- Explique chaque modification effectuée.
+
+Je souhaite que tu implémentes les éléments suivants :
+
+1. SEO TECHNIQUE
+- Ajouter un <title> unique et optimisé sur chaque page.
+- Ajouter une meta description pertinente sur chaque page.
+- Ajouter la balise robots (index, follow).
+- Ajouter des URL canoniques (canonical).
+- Vérifier que chaque page possède un seul H1.
+- Générer automatiquement les balises selon la page lorsque c'est nécessaire.
+
+2. OPEN GRAPH ET TWITTER
+Configurer complètement les balises :
+- og:title
+- og:description
+- og:image
+- og:url
+- og:type
+- twitter:card
+- twitter:title
+- twitter:description
+- twitter:image
+
+L'objectif est que les liens affichent un aperçu professionnel sur WhatsApp, Facebook, X (Twitter), LinkedIn et Telegram.
+
+3. FAVICON
+Configurer correctement le favicon.
+Ajouter les tailles recommandées.
+Vérifier qu'il apparaît sur tous les navigateurs.
+
+4. ROBOTS.TXT
+Créer un robots.txt optimisé.
+Autoriser correctement les moteurs de recherche.
+Déclarer le sitemap.
+
+5. SITEMAP.XML
+Créer un sitemap.xml automatiquement.
+Inclure toutes les pages publiques.
+Prévoir une génération automatique lors des mises à jour.
+
+6. DONNÉES STRUCTURÉES (SCHEMA.ORG)
+Ajouter des données JSON-LD adaptées :
+- WebSite
+- Organization
+- WebPage
+- BreadcrumbList lorsque pertinent
+- Product ou LocalBusiness uniquement si cela apporte un avantage SEO.
+
+7. PERFORMANCE
+Optimiser :
+- Compression Gzip/Brotli
+- Cache HTTP
+- Lazy Loading des images
+- Préchargement des ressources importantes
+- Minification si nécessaire
+- Réduction du temps de chargement
+
+8. ACCESSIBILITÉ
+- Ajouter les attributs alt sur toutes les images.
+- Vérifier les labels des formulaires.
+- Corriger les problèmes d'accessibilité impactant le SEO.
+
+9. EXPRESS
+Configurer Express afin de :
+- servir robots.txt
+- servir sitemap.xml
+- gérer correctement les fichiers statiques
+- envoyer les bons headers HTTP
+- gérer proprement les redirections
+
+10. GOOGLE SEARCH CONSOLE
+Préparer entièrement le projet afin que je puisse simplement :
+- ajouter le domaine dans Google Search Console
+- soumettre le sitemap
+sans effectuer d'autres modifications.
+
+11. MÉTADONNÉES
+Optimiser toutes les métadonnées nécessaires pour Google, Bing, DuckDuckGo et les réseaux sociaux.
+
+12. VÉRIFICATION FINALE
+À la fin du travail :
+- vérifier qu'il n'existe aucune erreur SEO ;
+- vérifier que le site est prêt pour l'indexation Google ;
+- fournir un rapport détaillé de toutes les modifications ;
+- lister tous les fichiers créés ou modifiés ;
+- expliquer pourquoi chaque modification améliore le référencement.
+
+Je souhaite une implémentation propre, moderne, maintenable, conforme aux bonnes pratiques SEO de 2026 et prête pour la production.
+
+
+C'est maintenant disponible : https://yaka-marche.xyz
+
 *Yaka Marché — un produit WORLDIFYAI, by Devoué.*
