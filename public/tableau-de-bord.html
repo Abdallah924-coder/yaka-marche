@@ -20,6 +20,7 @@
       <a href="/annonces">Annonces</a>
       <a href="/publier">Publier</a>
       <a href="/favoris" data-auth="user">Favoris</a>
+      <a href="/alertes" data-auth="user">Alertes</a>
       <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
       <a href="/admin" data-auth="admin" class="hidden">Admin</a>
     </div>
@@ -45,6 +46,15 @@
     </div>
 
     <div class="panel" style="margin-top:24px;">
+      <h3 style="margin-bottom:6px; font-size:1.1rem;">Parraine tes amis</h3>
+      <p class="form-note" style="margin-bottom:16px;" id="referral-sub">Chargement...</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <input type="text" id="referral-link" readonly style="flex:1; min-width:220px;">
+        <button class="btn btn-outline btn-sm" id="copy-referral">Copier le lien</button>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
       <div id="rows"><div class="loading">Chargement...</div></div>
     </div>
 
@@ -64,6 +74,28 @@
 <script src="js/api.js"></script>
 <script>
 requireAuth();
+
+async function loadReferral() {
+  try {
+    const data = await apiFetch('/referrals/me');
+    const link = window.location.origin + '/inscription?ref=' + data.code;
+    document.getElementById('referral-link').value = link;
+
+    const remaining = data.threshold - data.progress;
+    let sub = `${data.referralCount} inscription${data.referralCount > 1 ? 's' : ''} via ton lien`;
+    sub += data.freeBoostCredits > 0
+      ? ` · ${data.freeBoostCredits} mise${data.freeBoostCredits > 1 ? 's' : ''} en avant gratuite${data.freeBoostCredits > 1 ? 's' : ''} disponible${data.freeBoostCredits > 1 ? 's' : ''} !`
+      : ` · encore ${remaining} pour débloquer une mise en avant gratuite`;
+    document.getElementById('referral-sub').textContent = sub;
+
+    document.getElementById('copy-referral').addEventListener('click', async () => {
+      const ok = await copyToClipboard(link);
+      showToast(ok ? 'Lien copié !' : 'Impossible de copier, sélectionne-le manuellement.', !ok);
+    });
+  } catch (err) {
+    document.getElementById('referral-sub').textContent = 'Impossible de charger tes infos de parrainage.';
+  }
+}
 
 async function loadMine() {
   const rowsEl = document.getElementById('rows');
@@ -97,7 +129,11 @@ function renderRows(listings) {
     <div class="dash-row" data-id="${l.id}">
       <div class="info">
         <h4>${l.title} ${l.featured ? '<span class="featured-tag" style="position:static; margin-left:8px;">En avant</span>' : ''}</h4>
-        <div class="meta">${formatPrice(l.price)} · ${l.city} · ${l.views || 0} vue${(l.views || 0) > 1 ? 's' : ''} · publié le ${formatDate(l.createdAt)}</div>
+        <div class="meta">${formatPrice(l.price)} · ${l.city} · publié le ${formatDate(l.createdAt)}</div>
+        <div class="meta">
+          👁 ${l.views || 0} vue${(l.views || 0) > 1 ? 's' : ''} (${l.viewsThisWeek || 0} cette semaine)
+          · 💬 ${l.contactClicks || 0} contact${(l.contactClicks || 0) > 1 ? 's' : ''} (${l.contactsThisWeek || 0} cette semaine)
+        </div>
       </div>
       <div class="actions">
         <a class="btn btn-outline btn-sm" href="/annonce?id=${l.id}">Voir</a>
@@ -140,6 +176,7 @@ async function deleteListing(id) {
   }
 }
 
+loadReferral();
 loadMine();
 </script>
 </body>

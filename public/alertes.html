@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alertes — Yaka Marché</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="inner">
+    <a href="/" class="brand"><div class="brand-mark">Y</div><span class="brand-text">Yaka Marché</span></a>
+    <div class="nav-links">
+      <a href="/">Accueil</a>
+      <a href="/annonces">Annonces</a>
+      <a href="/publier">Publier</a>
+      <a href="/favoris" data-auth="user">Favoris</a>
+      <a href="/alertes" data-auth="user">Alertes</a>
+      <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
+      <a href="/admin" data-auth="admin" class="hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/connexion" class="btn btn-outline btn-sm" data-auth="guest">Connexion</a>
+      <a href="/inscription" class="btn btn-primary btn-sm" data-auth="guest">Inscription</a>
+      <a href="/tableau-de-bord" class="btn btn-outline btn-sm hidden" data-auth="user">Mon compte</a>
+      <a href="#" class="btn btn-leather btn-sm hidden" data-auth="user" data-action="logout">Déconnexion</a>
+    </div>
+  </div>
+</nav>
+
+<section>
+  <div class="container" style="max-width:640px;">
+    <div class="section-head">
+      <h2>Mes alertes</h2>
+      <p>Reçois un email dès qu'une nouvelle annonce correspond à tes critères.</p>
+    </div>
+
+    <div class="panel" style="margin-bottom:32px;">
+      <h3 style="margin-bottom:14px; font-size:1.1rem;">Créer une alerte</h3>
+      <form id="alert-form" class="grid-form">
+        <div class="field">
+          <label>Catégorie</label>
+          <select id="a-cat">
+            <option value="Toutes">Toutes catégories</option>
+            <option value="Services">Services</option>
+            <option value="Electronique">Électronique</option>
+            <option value="Mode">Mode</option>
+            <option value="Immobilier">Immobilier</option>
+            <option value="Vehicules">Véhicules</option>
+            <option value="Cours & Formation">Cours &amp; Formation</option>
+            <option value="Maison & Meubles">Maison &amp; Meubles</option>
+            <option value="Alimentation">Alimentation</option>
+            <option value="Beaute & Bien-etre">Beauté &amp; Bien-être</option>
+            <option value="Sport & Loisirs">Sport &amp; Loisirs</option>
+            <option value="Emploi">Emploi</option>
+            <option value="Bebe & Enfants">Bébé &amp; Enfants</option>
+            <option value="Agriculture & Elevage">Agriculture &amp; Élevage</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ville (optionnel)</label>
+          <input type="text" id="a-city" placeholder="Ex : Brazzaville">
+        </div>
+        <div class="field full">
+          <label>Mot-clé (optionnel)</label>
+          <input type="text" id="a-keyword" placeholder="Ex : iPhone, appartement...">
+        </div>
+        <div class="field full">
+          <div class="form-error" id="form-error"></div>
+          <button type="submit" class="btn btn-primary" id="submit-btn">Créer l'alerte</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section-head">
+      <h2 style="font-size:1.3rem;">Alertes actives</h2>
+    </div>
+    <div class="panel" id="alerts-list"><div class="loading">Chargement...</div></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container inner">
+    <div>© 2026 Yaka Marché — marketplace locale, Congo.</div>
+    <div class="credit">Un produit WORLDIFYAI </div>
+  </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+requireAuth();
+
+async function loadAlerts() {
+  const listEl = document.getElementById('alerts-list');
+  try {
+    const data = await apiFetch('/alerts');
+    render(data.alerts);
+  } catch (err) {
+    listEl.innerHTML = '<div class="empty">' + err.message + '</div>';
+  }
+}
+
+function render(alerts) {
+  const listEl = document.getElementById('alerts-list');
+  if (!alerts.length) {
+    listEl.innerHTML = '<div class="empty">Aucune alerte pour l\'instant.</div>';
+    return;
+  }
+
+  listEl.innerHTML = alerts.map(a => `
+    <div class="dash-row" data-id="${a.id}">
+      <div class="info">
+        <h4>${a.category === 'Toutes' ? 'Toutes catégories' : a.category}${a.city ? ' · ' + a.city : ''}</h4>
+        <div class="meta">${a.keyword ? 'Mot-clé : ' + a.keyword : 'Sans mot-clé'} · créée le ${formatDate(a.createdAt)}</div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-danger btn-sm" data-delete="${a.id}">Supprimer</button>
+      </div>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      try {
+        await apiFetch('/alerts/' + btn.dataset.delete, { method: 'DELETE' });
+        showToast('Alerte supprimée.');
+        loadAlerts();
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    });
+  });
+}
+
+document.getElementById('alert-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const errorEl = document.getElementById('form-error');
+  const btn = document.getElementById('submit-btn');
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Création...';
+
+  try {
+    await apiFetch('/alerts', {
+      method: 'POST',
+      body: JSON.stringify({
+        category: document.getElementById('a-cat').value,
+        city: document.getElementById('a-city').value.trim(),
+        keyword: document.getElementById('a-keyword').value.trim()
+      })
+    });
+    showToast('Alerte créée !');
+    document.getElementById('alert-form').reset();
+    loadAlerts();
+  } catch (err) {
+    errorEl.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Créer l\'alerte';
+  }
+});
+
+loadAlerts();
+</script>
+</body>
+</html>

@@ -4,7 +4,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { requireAuth } = require('../middleware/auth');
-const { welcomeEmail, loginAlertEmail, resetPasswordEmail } = require('../utils/brevo');
+const { welcomeEmail, loginAlertEmail, resetPasswordEmail, referralCreditEmail } = require('../utils/brevo');
+
+const REFERRAL_THRESHOLD = Number(process.env.REFERRAL_THRESHOLD || 5);
+
+function generateReferralCode() {
+  return crypto.randomBytes(4).toString('hex').toUpperCase(); // ex: "A1B2C3D4"
+}
 
 const router = express.Router();
 
@@ -24,14 +30,16 @@ function publicUser(user) {
     email: user.email,
     phone: user.phone,
     city: user.city,
-    isAdmin: isAdminEmail(user.email)
+    isAdmin: isAdminEmail(user.email),
+    referralCode: user.referralCode,
+    freeBoostCredits: user.freeBoostCredits || 0
   };
 }
 
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, phone, city, password } = req.body;
+    const { name, email, phone, city, password, ref } = req.body;
 
     if (!name || !email || !phone || !password) {
       return res.status(400).json({ error: 'Nom, email, telephone et mot de passe sont requis.' });
@@ -45,16 +53,40 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ error: 'Un compte existe deja avec cet email.' });
     }
 
+    let referrer = null;
+    if (ref) {
+      referrer = await User.findOne({ referralCode: ref.trim().toUpperCase() });
+    }
+
+    // Genere un code de parrainage unique (retente en cas de collision rarissime)
+    let referralCode;
+    for (let i = 0; i < 5; i++) {
+      const candidate = generateReferralCode();
+      const taken = await User.findOne({ referralCode: candidate });
+      if (!taken) { referralCode = candidate; break; }
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
       city: (city || '').trim(),
-      passwordHash
+      passwordHash,
+      referralCode,
+      referredBy: referrer ? referrer._id : null
     });
 
     welcomeEmail(user).catch(() => {});
+
+    if (referrer) {
+      const totalReferrals = await User.countDocuments({ referredBy: referrer._id });
+      if (totalReferrals > 0 && totalReferrals % REFERRAL_THRESHOLD === 0) {
+        referrer.freeBoostCredits = (referrer.freeBoostCredits || 0) + 1;
+        await referrer.save();
+        referralCreditEmail(referrer, totalReferrals).catch(() => {});
+      }
+    }
 
     const token = signToken(user._id);
     res.status(201).json({ token, user: publicUser(user) });
@@ -105,7 +137,6 @@ router.get('/me', requireAuth, async (req, res) => {
 });
 
 // POST /api/auth/forgot-password
-// Ne revele jamais si l'email existe ou non (reponse identique dans les deux cas).
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -120,7 +151,7 @@ router.post('/forgot-password', async (req, res) => {
       const tokenHash = crypto.createHash('sha256').update(rawToken).digest('hex');
 
       user.resetTokenHash = tokenHash;
-      user.resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 heure
+      user.resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
       await user.save();
 
       const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');

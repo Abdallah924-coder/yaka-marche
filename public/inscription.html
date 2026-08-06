@@ -20,6 +20,7 @@
       <a href="/annonces">Annonces</a>
       <a href="/publier">Publier</a>
       <a href="/favoris" data-auth="user">Favoris</a>
+      <a href="/alertes" data-auth="user">Alertes</a>
       <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
       <a href="/admin" data-auth="admin" class="hidden">Admin</a>
     </div>
@@ -37,6 +38,9 @@
     <div class="panel panel-narrow">
       <h2 style="margin-bottom:8px;">Créer un compte</h2>
       <p class="form-note" style="margin-bottom:28px;">Un seul compte pour acheter et vendre sur Yaka Marché.</p>
+      <div id="ref-notice" class="hidden" style="background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:20px; font-size:0.88rem; color:var(--ink-muted);">
+        👋 Tu as été invité·e par un ami sur Yaka Marché.
+      </div>
 
       <form id="register-form">
         <div class="field" style="margin-bottom:16px;">
@@ -79,6 +83,10 @@
 
 <script src="js/api.js"></script>
 <script>
+if (new URLSearchParams(window.location.search).get('ref')) {
+  document.getElementById('ref-notice').classList.remove('hidden');
+}
+
 document.getElementById('register-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const errorEl = document.getElementById('form-error');
@@ -95,11 +103,12 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         email: document.getElementById('f-email').value.trim(),
         phone: document.getElementById('f-phone').value.trim(),
         city: document.getElementById('f-city').value.trim(),
-        password: document.getElementById('f-password').value
+        password: document.getElementById('f-password').value,
+        ref: new URLSearchParams(window.location.search).get('ref') || undefined
       })
     });
     setSession(data.token, data.user);
-    window.location.href = 'tableau-de-bord.html';
+    window.location.href = '/tableau-de-bord';
   } catch (err) {
     errorEl.textContent = err.message;
     btn.disabled = false;

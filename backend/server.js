@@ -11,11 +11,12 @@ const paymentRoutes = require('./routes/payments');
 const adminRoutes = require('./routes/admin');
 const sellerRoutes = require('./routes/sellers');
 const favoriteRoutes = require('./routes/favorites');
+const alertRoutes = require('./routes/alerts');
+const referralRoutes = require('./routes/referrals');
 
 const app = express();
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
-// Limite relevee pour accepter plusieurs images d'annonce + captures d'ecran en base64
 app.use(express.json({ limit: '15mb' }));
 
 // --- API ---
@@ -25,17 +26,16 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/sellers', sellerRoutes);
 app.use('/api/favorites', favoriteRoutes);
+app.use('/api/alerts', alertRoutes);
+app.use('/api/referrals', referralRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'yaka-marche-backend' });
 });
 
-// --- Frontend statique (dossier /public a la racine du projet) ---
-// "extensions: ['html']" permet des URLs propres : /connexion sert connexion.html
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir, { extensions: ['html'] }));
 
-// Toute route non-API renvoie index.html (pages HTML classiques, pas de SPA framework)
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   res.sendFile(path.join(publicDir, 'index.html'), (err) => {

@@ -148,6 +148,44 @@ function resetPasswordEmail(user, resetLink) {
   });
 }
 
+function searchAlertEmail(user, listing, alertAppUrl) {
+  return sendEmail({
+    to: user.email,
+    toName: user.name,
+    subject: `Nouvelle annonce : ${listing.title}`,
+    htmlContent: `
+      <div style="font-family:sans-serif; padding:24px; color:#111;">
+        <h2>Une annonce correspond a ton alerte</h2>
+        <p><strong>${listing.title}</strong> - ${listing.category} - ${listing.city}</p>
+        <p style="margin:20px 0;">
+          <a href="${alertAppUrl}" style="background:#FFD43B; color:#141200; padding:12px 22px;
+          border-radius:8px; text-decoration:none; font-weight:600;">Voir l'annonce</a>
+        </p>
+        <p style="color:#888; font-size:13px;">Tu reçois cet email car tu as cree une alerte sur Yaka Marche.
+        Tu peux la supprimer depuis la page "Alertes" de ton compte.</p>
+        ${footer()}
+      </div>
+    `
+  });
+}
+
+function referralCreditEmail(user, totalReferrals) {
+  return sendEmail({
+    to: user.email,
+    toName: user.name,
+    subject: 'Tu as gagne une mise en avant gratuite !',
+    htmlContent: `
+      <div style="font-family:sans-serif; padding:24px; color:#111;">
+        <h2>Bravo, ${user.name} !</h2>
+        <p>Grace a tes parrainages (${totalReferrals} inscriptions via ton lien), tu viens de debloquer
+        une mise en avant gratuite sur Yaka Marche.</p>
+        <p>Utilise-la sur l'annonce de ton choix depuis la page de mise en avant.</p>
+        ${footer()}
+      </div>
+    `
+  });
+}
+
 module.exports = {
   sendEmail,
   welcomeEmail,
@@ -155,5 +193,7 @@ module.exports = {
   listingPublishedEmail,
   boostPendingEmail,
   boostApprovedEmail,
-  resetPasswordEmail
+  resetPasswordEmail,
+  searchAlertEmail,
+  referralCreditEmail
 };

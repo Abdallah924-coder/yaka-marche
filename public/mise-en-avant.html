@@ -20,6 +20,7 @@
       <a href="/annonces">Annonces</a>
       <a href="/publier">Publier</a>
       <a href="/favoris" data-auth="user">Favoris</a>
+      <a href="/alertes" data-auth="user">Alertes</a>
       <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
       <a href="/admin" data-auth="admin" class="hidden">Admin</a>
     </div>
@@ -70,23 +71,31 @@ async function init() {
   }
 
   try {
-    const [listingData, infoData] = await Promise.all([
+    const [listingData, infoData, meData] = await Promise.all([
       apiFetch('/listings/' + listingId),
-      apiFetch('/payments/info')
+      apiFetch('/payments/info'),
+      apiFetch('/auth/me')
     ]);
 
     document.getElementById('listing-title').textContent =
       '"' + listingData.listing.title + '" — ' + formatPrice(infoData.priceFcfa) + ' pour la mise en avant';
 
-    renderForm(infoData);
+    renderForm(infoData, meData.user.freeBoostCredits || 0);
   } catch (err) {
     document.getElementById('content').innerHTML = '<div class="empty">' + err.message + '</div>';
   }
 }
 
-function renderForm(info) {
+function renderForm(info, freeBoostCredits) {
   const content = document.getElementById('content');
   content.innerHTML = `
+    ${freeBoostCredits > 0 ? `
+      <div class="panel" style="border-color:var(--yellow); margin-bottom:20px;">
+        <h4 style="margin-bottom:8px;">🎁 Tu as ${freeBoostCredits} mise${freeBoostCredits > 1 ? 's' : ''} en avant gratuite${freeBoostCredits > 1 ? 's' : ''}</h4>
+        <p class="form-note" style="margin-bottom:14px;">Gagnée${freeBoostCredits > 1 ? 's' : ''} grâce à ton parrainage — utilisable immédiatement, sans paiement.</p>
+        <button class="btn btn-primary" id="redeem-btn">Utiliser un crédit gratuit</button>
+      </div>
+    ` : ''}
     <div class="pay-methods">
       <div class="pay-method" id="method-momo" data-method="momo">
         <h4>💛 MTN Mobile Money</h4>
@@ -122,6 +131,28 @@ function renderForm(info) {
       </button>
     </div>
   `;
+
+  const redeemBtn = document.getElementById('redeem-btn');
+  if (redeemBtn) {
+    redeemBtn.addEventListener('click', async () => {
+      redeemBtn.disabled = true;
+      redeemBtn.textContent = 'Activation...';
+      try {
+        await apiFetch('/listings/' + listingId + '/redeem-boost-credit', { method: 'POST' });
+        document.getElementById('content').innerHTML = `
+          <div class="panel" style="text-align:center;">
+            <h3 style="margin-bottom:10px;">Annonce mise en avant ✅</h3>
+            <p class="form-note">Ton crédit gratuit a été utilisé, ton annonce est maintenant en tête des résultats.</p>
+            <a href="/tableau-de-bord" class="btn btn-outline" style="margin-top:20px;">Retour au tableau de bord</a>
+          </div>
+        `;
+      } catch (err) {
+        showToast(err.message, true);
+        redeemBtn.disabled = false;
+        redeemBtn.textContent = 'Utiliser un crédit gratuit';
+      }
+    });
+  }
 
   document.querySelectorAll('.pay-method').forEach(el => {
     el.addEventListener('click', () => {

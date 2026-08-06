@@ -128,6 +128,15 @@ async function toggleFavorite(listingId) {
 function isNew(createdAt) {
   return (Date.now() - new Date(createdAt).getTime()) < 24 * 60 * 60 * 1000;
 }
+// Copie un texte dans le presse-papier, avec repli si l'API n'est pas disponible.
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 function showToast(msg, isError) {
   let el = document.getElementById('toast');

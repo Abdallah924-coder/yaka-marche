@@ -1,14 +1,68 @@
 const express = require('express');
 const Listing = require('../models/Listing');
 const User = require('../models/User');
+const SearchAlert = require('../models/SearchAlert');
 const { requireAuth } = require('../middleware/auth');
-const { listingPublishedEmail } = require('../utils/brevo');
+const { listingPublishedEmail, searchAlertEmail } = require('../utils/brevo');
 
 const IMAGE_REQUIRED_CATEGORIES = Listing.IMAGE_REQUIRED_CATEGORIES;
 
 const router = express.Router();
 
 const OWNER_FIELDS = 'name phone ratingAvg ratingCount';
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Remet a zero les compteurs "cette semaine" si plus de 7 jours se sont ecoules.
+// Modifie le document en memoire, ne sauvegarde pas (appelant responsable du save()).
+function applyWeeklyReset(listing) {
+  const weekStart = listing.weekStart || listing.createdAt;
+  if (Date.now() - new Date(weekStart).getTime() > WEEK_MS) {
+    listing.weekStart = new Date();
+    listing.viewsThisWeek = 0;
+    listing.contactsThisWeek = 0;
+  }
+}
+
+// Envoie une notification par email a tous les utilisateurs dont une alerte
+// correspond a cette nouvelle annonce (hors l'auteur lui-meme).
+async function notifyMatchingAlerts(listing) {
+  try {
+    const alerts = await SearchAlert.find({ user: { $ne: listing.owner } });
+    const title = listing.title.toLowerCase();
+    const desc = listing.description.toLowerCase();
+    const city = listing.city.toLowerCase();
+
+    const matching = alerts.filter((a) => {
+      const catOk = !a.category || a.category === 'Toutes' || a.category === listing.category;
+      const cityOk = !a.city || city.includes(a.city.toLowerCase());
+      const kw = (a.keyword || '').toLowerCase();
+      const keywordOk = !kw || title.includes(kw) || desc.includes(kw);
+      return catOk && cityOk && keywordOk;
+    });
+
+    if (!matching.length) return;
+
+    const userIds = [...new Set(matching.map((a) => String(a.user)))];
+    const users = await User.find({ _id: { $in: userIds } });
+    const userMap = {};
+    users.forEach((u) => { userMap[String(u._id)] = u; });
+
+    const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
+    const listingLink = `${appUrl}/annonce?id=${listing._id}`;
+
+    for (const userId of userIds) {
+      const user = userMap[userId];
+      if (user) searchAlertEmail(user, listing, listingLink).catch(() => {});
+    }
+
+    await SearchAlert.updateMany(
+      { _id: { $in: matching.map((a) => a._id) } },
+      { lastNotifiedAt: new Date() }
+    );
+  } catch (err) {
+    console.error('[alerts] erreur notification :', err.message);
+  }
+}
 
 function publicListing(listing, opts = {}) {
   const owner = listing.owner && listing.owner.name ? {
@@ -36,6 +90,9 @@ function publicListing(listing, opts = {}) {
     featured: listing.featured,
     status: listing.status,
     views: listing.views || 0,
+    contactClicks: listing.contactClicks || 0,
+    viewsThisWeek: listing.viewsThisWeek || 0,
+    contactsThisWeek: listing.contactsThisWeek || 0,
     lastBumpedAt: listing.lastBumpedAt,
     createdAt: listing.createdAt,
     ownerId: listing.owner && listing.owner._id ? listing.owner._id : listing.owner,
@@ -75,7 +132,7 @@ router.get('/', async (req, res) => {
 router.get('/mine', requireAuth, async (req, res) => {
   try {
     const listings = await Listing.find({ owner: req.userId }).sort({ createdAt: -1 });
-    res.json({ listings: listings.map((l) => publicListing(l, { thumbnailOnly: true })) });;
+    res.json({ listings: listings.map((l) => publicListing(l, { thumbnailOnly: true })) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur.' });
@@ -85,13 +142,33 @@ router.get('/mine', requireAuth, async (req, res) => {
 // GET /api/listings/:id
 router.get('/:id', async (req, res) => {
   try {
-    const listing = await Listing.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { views: 1 } },
-      { new: true }
-    ).populate('owner', OWNER_FIELDS);
+    const listing = await Listing.findById(req.params.id).populate('owner', OWNER_FIELDS);
     if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
+
+    applyWeeklyReset(listing);
+    listing.views = (listing.views || 0) + 1;
+    listing.viewsThisWeek = (listing.viewsThisWeek || 0) + 1;
+    await listing.save();
+
     res.json({ listing: publicListing(listing) });
+  } catch (err) {
+    res.status(404).json({ error: 'Annonce introuvable.' });
+  }
+});
+
+// POST /api/listings/:id/contact-click
+// Trace un clic "Contacter sur WhatsApp" (public, pas besoin d'etre connecte).
+router.post('/:id/contact-click', async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
+
+    applyWeeklyReset(listing);
+    listing.contactClicks = (listing.contactClicks || 0) + 1;
+    listing.contactsThisWeek = (listing.contactsThisWeek || 0) + 1;
+    await listing.save();
+
+    res.json({ ok: true });
   } catch (err) {
     res.status(404).json({ error: 'Annonce introuvable.' });
   }
@@ -127,7 +204,7 @@ router.post('/', requireAuth, async (req, res) => {
 
     const user = await User.findById(req.userId);
     if (user) listingPublishedEmail(user, listing).catch(() => {});
-
+    notifyMatchingAlerts(listing).catch(() => {});
     res.status(201).json({ listing: publicListing(listing) });
   } catch (err) {
     console.error(err);
@@ -234,6 +311,37 @@ router.post('/:id/favorite', requireAuth, async (req, res) => {
 
     await user.save();
     res.json({ favorited });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erreur serveur.' });
+  }
+});
+
+// POST /api/listings/:id/redeem-boost-credit
+// Utilise un credit de mise en avant gratuit gagne par parrainage.
+router.post('/:id/redeem-boost-credit', requireAuth, async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
+    if (String(listing.owner) !== String(req.userId)) {
+      return res.status(403).json({ error: 'Tu ne peux mettre en avant que tes propres annonces.' });
+    }
+    if (listing.featured) {
+      return res.status(400).json({ error: 'Cette annonce est deja mise en avant.' });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user || (user.freeBoostCredits || 0) < 1) {
+      return res.status(400).json({ error: 'Tu n\'as pas de credit de mise en avant disponible.' });
+    }
+
+    user.freeBoostCredits -= 1;
+    await user.save();
+
+    listing.featured = true;
+    await listing.save();
+
+    res.json({ listing: publicListing(listing), freeBoostCredits: user.freeBoostCredits });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur.' });

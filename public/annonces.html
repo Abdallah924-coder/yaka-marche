@@ -20,6 +20,7 @@
       <a href="/annonces">Annonces</a>
       <a href="/publier">Publier</a>
       <a href="/favoris" data-auth="user">Favoris</a>
+      <a href="/alertes" data-auth="user">Alertes</a>
       <a href="/tableau-de-bord" data-auth="user">Tableau de bord</a>
       <a href="/admin" data-auth="admin" class="hidden">Admin</a>
     </div>
@@ -35,9 +36,10 @@
 <section>
   <div class="container">
     <div class="section-head">
-      <h2>Toutes les annonces</h2>
-      <p>Les annonces mises en avant apparaissent en premier.</p>
-    </div>
+  <h2>Toutes les annonces</h2>
+  <p>Les annonces mises en avant apparaissent en premier.</p>
+  <a href="/alertes" class="btn btn-outline btn-sm" style="margin-top:14px;">🔔 Créer une alerte</a>
+</div>
 
     <div class="toolbar">
       <input type="text" id="search" placeholder="Rechercher (titre, description, ville...)">

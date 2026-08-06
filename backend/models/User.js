@@ -11,6 +11,9 @@ const userSchema = new mongoose.Schema({
   resetTokenHash: { type: String, default: null },
   resetTokenExpires: { type: Date, default: null },
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Listing' }],
+  referralCode: { type: String, unique: true, sparse: true },
+  referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  freeBoostCredits: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
