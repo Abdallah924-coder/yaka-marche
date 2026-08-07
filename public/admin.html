@@ -4,8 +4,28 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Gestion administrative de Yaka Marché.">
-<title>Panneau Admin — Yaka Marché</title>
+<title>Administration — Yaka Marché</title>
 <meta name="theme-color" content="#0A0A0A">
+
+<meta name="description" content="Espace d'administration Yaka Marché.">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://yaka-marche.xyz/admin">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/css/style.css" as="style">
+<link rel="preload" href="/js/api.js" as="script">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Yaka Marché">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Administration — Yaka Marché">
+<meta property="og:description" content="Espace d'administration Yaka Marché.">
+<meta property="og:url" content="https://yaka-marche.xyz/admin">
+<meta property="og:image" content="https://yaka-marche.xyz/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Administration — Yaka Marché">
+<meta name="twitter:description" content="Espace d'administration Yaka Marché.">
+<meta name="twitter:image" content="https://yaka-marche.xyz/og-image.png">
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -38,7 +58,7 @@
 <section>
   <div class="container">
     <div class="section-head">
-      <h2>Administration</h2>
+      <h1>Administration</h1>
       <p>Vue d'ensemble, demandes de mise en avant à valider, et liste des utilisateurs.</p>
     </div>
 
@@ -151,7 +171,7 @@ function renderRequests(requests) {
           <button class="btn btn-danger btn-sm" data-reject="${r.id}">Rejeter</button>
         </div>
       </div>
-      <img class="preview-img" src="${r.proofImage}" alt="Preuve de paiement">
+      <img class="preview-img" src="${r.proofImage}" alt="Preuve de paiement" loading="lazy">
     </div>
   `).join('');
 

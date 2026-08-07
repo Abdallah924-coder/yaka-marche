@@ -13,6 +13,28 @@
 <!-- Additional Meta -->
 <meta name="theme-color" content="#0A0A0A">
 
+<meta name="description" content="Consulte le profil, les annonces et les avis de ce vendeur sur Yaka Marché.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://yaka-marche.xyz/annonceur">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/css/style.css" as="style">
+<link rel="preload" href="/js/api.js" as="script">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Yaka Marché">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Profil vendeur — Yaka Marché">
+<meta property="og:description" content="Consulte le profil, les annonces et les avis de ce vendeur sur Yaka Marché.">
+<meta property="og:url" content="https://yaka-marche.xyz/annonceur">
+<meta property="og:image" content="https://yaka-marche.xyz/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Profil vendeur — Yaka Marché">
+<meta name="twitter:description" content="Consulte le profil, les annonces et les avis de ce vendeur sur Yaka Marché.">
+<meta name="twitter:image" content="https://yaka-marche.xyz/og-image.png">
+
+<script type="application/ld+json" id="ld-json">{"@context": "https://schema.org", "@type": "ProfilePage"}</script>
+
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
@@ -97,7 +119,7 @@ function render(data) {
       ${listings.length ? listings.map(l => `
         <a class="card ${l.featured ? 'featured' : ''}" href="/annonce?id=${l.id}">
           ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
-          <div class="card-thumb">${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="">` : 'Pas de photo'}</div>
+          <div class="card-thumb">${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="${l.title}" loading="lazy">` : 'Pas de photo'}</div>
           <span class="cat-pill">${l.category}</span>
           <h3>${l.title}</h3>
           <div class="price mono">${formatPrice(l.price)}</div>
@@ -149,7 +171,7 @@ function renderReviewForm() {
   formWrap.innerHTML = `
     <div class="panel">
       <h3 style="margin-bottom:14px; font-size:1.1rem;">Laisser un avis</h3>
-      <div class="star-picker" id="star-picker">
+      <div class="star-picker" id="star-picker" role="radiogroup" aria-label="Note sur 5 étoiles">
         ${[1,2,3,4,5].map(i => `<span class="star" data-value="${i}">★</span>`).join('')}
       </div>
       <textarea id="review-comment" placeholder="Ton expérience avec ce vendeur (optionnel)" style="margin-top:14px;"></textarea>

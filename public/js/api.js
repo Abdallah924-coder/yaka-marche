@@ -173,9 +173,6 @@ function renderNavAuthState() {
     el.addEventListener('click', (e) => { e.preventDefault(); logout(); });
   });
 }
-
-// Ajoute un bouton hamburger dans la nav (visible en mobile via CSS) qui
-// affiche/masque les liens de navigation.
 function initMobileNav() {
   const inner = document.querySelector('nav.topbar .inner');
   const links = document.querySelector('nav.topbar .nav-links');

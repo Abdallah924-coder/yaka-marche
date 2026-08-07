@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Pages de compte / privees : pas d'interet SEO, evite le crawl inutile
+Disallow: /tableau-de-bord
+Disallow: /favoris
+Disallow: /alertes
+Disallow: /mise-en-avant
+Disallow: /admin
+Disallow: /connexion
+Disallow: /inscription
+Disallow: /mot-de-passe-oublie
+Disallow: /reinitialiser-mot-de-passe
+
+Sitemap: https://yaka-marche.xyz/sitemap.xml

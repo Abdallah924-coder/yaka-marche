@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Voir le détail d'une annonce. Contact direct avec le vendeur sur WhatsApp. Ajouter aux favoris.">
-<title>Détail annonce — Yaka Marché</title>
+<title>Annonce — Yaka Marché</title>
 
 <!-- Open Graph -->
 
@@ -12,6 +12,28 @@
 
 <!-- Additional Meta -->
 <meta name="theme-color" content="#0A0A0A">
+
+<meta name="description" content="Découvre cette annonce sur Yaka Marché, la marketplace locale du Congo.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://yaka-marche.xyz/annonce">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/css/style.css" as="style">
+<link rel="preload" href="/js/api.js" as="script">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Yaka Marché">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Annonce — Yaka Marché">
+<meta property="og:description" content="Découvre cette annonce sur Yaka Marché, la marketplace locale du Congo.">
+<meta property="og:url" content="https://yaka-marche.xyz/annonce">
+<meta property="og:image" content="https://yaka-marche.xyz/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Annonce — Yaka Marché">
+<meta name="twitter:description" content="Découvre cette annonce sur Yaka Marché, la marketplace locale du Congo.">
+<meta name="twitter:image" content="https://yaka-marche.xyz/og-image.png">
+
+<script type="application/ld+json" id="ld-json">{"@context": "https://schema.org", "@type": "Product", "name": "Annonce Yaka Marché"}</script>
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -78,7 +100,7 @@ const data = await apiFetch('/listings/' + id);
         ${images.length ? `
           <div class="carousel" id="carousel" style="margin-bottom:22px;">
             <div class="carousel-track" id="carousel-track">
-              ${images.map(src => `<img src="${src}" alt="">`).join('')}
+              ${images.map((src, i) => `<img src="${src}" alt="${l.title} — photo ${i + 1}"${i === 0 ? '' : ' loading="lazy"'}>`).join('')}
             </div>
             ${images.length > 1 ? `
               <button class="carousel-arrow prev" id="carousel-prev">‹</button>

@@ -4,10 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Publie une annonce gratuitement sur Yaka Marché. Vends tes produits et services au Congo en quelques clics.">
-<title>Publier une annonce — Yaka Marché</title>
+<title>Publier une annonce gratuitement — Yaka Marché</title>
 
 
 <meta name="theme-color" content="#0A0A0A">
+
+<meta name="description" content="Publie gratuitement ton annonce sur Yaka Marché et touche des acheteurs partout au Congo, sans commission sur ta vente.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://yaka-marche.xyz/publier">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/css/style.css" as="style">
+<link rel="preload" href="/js/api.js" as="script">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Yaka Marché">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Publier une annonce gratuitement — Yaka Marché">
+<meta property="og:description" content="Publie gratuitement ton annonce sur Yaka Marché et touche des acheteurs partout au Congo, sans commission sur ta vente.">
+<meta property="og:url" content="https://yaka-marche.xyz/publier">
+<meta property="og:image" content="https://yaka-marche.xyz/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Publier une annonce gratuitement — Yaka Marché">
+<meta name="twitter:description" content="Publie gratuitement ton annonce sur Yaka Marché et touche des acheteurs partout au Congo, sans commission sur ta vente.">
+<meta name="twitter:image" content="https://yaka-marche.xyz/og-image.png">
+
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://yaka-marche.xyz/"}, {"@type": "ListItem", "position": 2, "name": "Publier une annonce", "item": "https://yaka-marche.xyz/publier"}]}</script>
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -41,7 +63,7 @@
   <div class="container">
 
     <div id="guest-notice" class="panel panel-narrow hidden" style="text-align:center;">
-      <h2 style="margin-bottom:10px;">Connecte-toi pour publier</h2>
+      <h1 style="margin-bottom:10px;">Connecte-toi pour publier</h1>
       <p class="form-note" style="margin-bottom:24px;">Un compte gratuit suffit pour vendre sur Yaka Marché.</p>
       <div style="display:flex; gap:12px; justify-content:center;">
         <a href="/connexion" class="btn btn-outline">Connexion</a>
@@ -51,7 +73,7 @@
 
     <div id="form-wrap" class="hidden">
       <div class="section-head">
-        <h2>Publier une annonce</h2>
+        <h1>Publier une annonce</h1>
         <p>C'est gratuit. Ton numéro WhatsApp sert de contact direct avec les acheteurs.</p>
       </div>
       <div class="panel">
@@ -156,7 +178,7 @@ function renderImageGrid() {
   listingImages.forEach((src, i) => {
     const slot = document.createElement('div');
     slot.className = 'image-slot';
-    slot.innerHTML = `<img src="${src}"><button type="button" data-remove="${i}">✕</button>`;
+    slot.innerHTML = `<img src="${src}" alt="Photo ${i + 1} de l'annonce"><button type="button" data-remove="${i}">✕</button>`;
     grid.insertBefore(slot, addSlot);
   });
 

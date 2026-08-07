@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Consultez vos annonces favorites sauvegardées sur Yaka Marché.">
-<title>Favoris — Vos annonces sauvegardées | Yaka Marché</title>
+<title>Mes favoris — Yaka Marché</title>
 
 <!-- Open Graph -->
 
@@ -12,6 +12,26 @@
 
 <!-- Additional Meta -->
 <meta name="theme-color" content="#0A0A0A">
+
+<meta name="description" content="Retrouve les annonces que tu as enregistrées sur Yaka Marché.">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://yaka-marche.xyz/favoris">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="/css/style.css" as="style">
+<link rel="preload" href="/js/api.js" as="script">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Yaka Marché">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="Mes favoris — Yaka Marché">
+<meta property="og:description" content="Retrouve les annonces que tu as enregistrées sur Yaka Marché.">
+<meta property="og:url" content="https://yaka-marche.xyz/favoris">
+<meta property="og:image" content="https://yaka-marche.xyz/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mes favoris — Yaka Marché">
+<meta name="twitter:description" content="Retrouve les annonces que tu as enregistrées sur Yaka Marché.">
+<meta name="twitter:image" content="https://yaka-marche.xyz/og-image.png">
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
@@ -44,7 +64,7 @@
 <section>
   <div class="container">
     <div class="section-head">
-      <h2>Mes favoris</h2>
+      <h1>Mes favoris</h1>
       <p>Les annonces que tu as enregistrées.</p>
     </div>
     <div class="listings" id="listings"><div class="loading">Chargement...</div></div>
@@ -85,7 +105,7 @@ function render(listings) {
       ${isNew(l.createdAt) ? '<div class="new-tag">Nouveau</div>' : ''}
       <button class="heart-btn active" data-fav="${l.id}">♥</button>
       <div class="card-thumb">
-        ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="">` : 'Pas de photo'}
+        ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="${l.title}" loading="lazy">` : 'Pas de photo'}
       </div>
       <span class="cat-pill">${l.category}</span>
       <h3>${l.title}</h3>
