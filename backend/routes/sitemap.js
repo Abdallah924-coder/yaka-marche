@@ -14,7 +14,9 @@ router.get('/sitemap.xml', async (req, res) => {
     const staticUrls = [
       { loc: '/', priority: '1.0', changefreq: 'daily' },
       { loc: '/annonces', priority: '0.9', changefreq: 'hourly' },
-      { loc: '/publier', priority: '0.6', changefreq: 'monthly' }
+      { loc: '/publier', priority: '0.6', changefreq: 'monthly' },
+      { loc: '/mentions-legales', priority: '0.3', changefreq: 'yearly' },
+      { loc: '/politique-de-confidentialite', priority: '0.3', changefreq: 'yearly' }
     ];
 
     const listings = await Listing.find({ status: 'active' })
