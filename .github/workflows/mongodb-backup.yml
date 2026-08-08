@@ -1,0 +1,36 @@
+name: Sauvegarde MongoDB
+
+on:
+  schedule:
+    # Tous les jours a 3h00 UTC (4h/5h du matin en Afrique centrale, heure creuse)
+    - cron: '0 3 * * *'
+  workflow_dispatch: # permet de lancer une sauvegarde manuellement depuis l'onglet Actions
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Installer mongodump
+        run: |
+          wget -q https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2204-x86_64-100.9.4.deb
+          sudo apt-get install -y ./mongodb-database-tools-ubuntu2204-x86_64-100.9.4.deb
+
+      - name: Exporter la base de donnees
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          mkdir -p backup
+          mongodump --uri="$MONGODB_URI" --out=backup/
+
+      - name: Compresser la sauvegarde
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          tar -czf "yaka-marche-backup-$DATE.tar.gz" backup/
+          echo "BACKUP_NAME=yaka-marche-backup-$DATE" >> $GITHUB_ENV
+
+      - name: Uploader la sauvegarde (conservee 30 jours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BACKUP_NAME }}
+          path: "*.tar.gz"
+          retention-days: 30
