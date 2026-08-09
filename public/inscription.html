@@ -104,9 +104,8 @@
       </form>
 
       <p class="form-note" style="margin-top:20px; text-align:center;">
-        Déjà inscrit ? <a href="/connexion" style="color:var(--yellow);">Se connecter</a>
-      </p>
-    </div>
+  Déjà inscrit ? <a href="/connexion" id="login-link" style="color:var(--yellow);">Se connecter</a>
+  </p>
   </div>
 </section>
 
@@ -121,6 +120,10 @@
 <script>
 if (new URLSearchParams(window.location.search).get('ref')) {
   document.getElementById('ref-notice').classList.remove('hidden');
+  const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+if (redirectParam) {
+  document.getElementById('login-link').href = '/connexion?redirect=' + encodeURIComponent(redirectParam);
+}
 }
 
 document.getElementById('register-form').addEventListener('submit', async (e) => {
@@ -144,7 +147,10 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
       })
     });
     setSession(data.token, data.user);
-    window.location.href = '/tableau-de-bord';
+    if (typeof gtag === 'function') {
+      gtag('event', 'sign_up', { method: 'email' });
+    }
+    window.location.href = redirectParam || '/tableau-de-bord';
   } catch (err) {
     errorEl.textContent = err.message;
     btn.disabled = false;

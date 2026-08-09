@@ -93,7 +93,7 @@
       </p>
 
       <p class="form-note" style="margin-top:8px; text-align:center;">
-        Pas encore de compte ? <a href="/inscription" style="color:var(--yellow);">S'inscrire</a>
+  Pas encore de compte ? <a href="/inscription" id="signup-link" style="color:var(--yellow);">S'inscrire</a>
       </p>
     </div>
   </div>
@@ -108,6 +108,10 @@
 
 <script src="js/api.js"></script>
 <script>
+  const redirectParam = new URLSearchParams(window.location.search).get('redirect');
+if (redirectParam) {
+  document.getElementById('signup-link').href = '/inscription?redirect=' + encodeURIComponent(redirectParam);
+}
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const errorEl = document.getElementById('form-error');
@@ -125,7 +129,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       })
     });
     setSession(data.token, data.user);
-    window.location.href = 'tableau-de-bord.html';
+    const redirect = new URLSearchParams(window.location.search).get('redirect');
+    window.location.href = redirect || '/tableau-de-bord';
   } catch (err) {
     errorEl.textContent = err.message;
     btn.disabled = false;

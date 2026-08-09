@@ -159,9 +159,17 @@ const data = await apiFetch('/listings/' + id);
         showToast(err.message, true);
       }
     });
-    document.getElementById('wa-btn').addEventListener('click', () => {
-  apiFetch('/listings/' + l.id + '/contact-click', { method: 'POST' }).catch(() => {});
-});
+    document.getElementById('wa-btn').addEventListener('click', (e) => {
+      if (!getToken()) {
+        e.preventDefault();
+        window.location.href = '/connexion?redirect=' + encodeURIComponent('/annonce?id=' + l.id);
+        return;
+      }
+      apiFetch('/listings/' + l.id + '/contact-click', { method: 'POST' }).catch(() => {});
+      if (typeof gtag === 'function') {
+        gtag('event', 'contact_whatsapp', { listing_id: l.id, category: l.category });
+      }
+    });
 
     if (images.length > 1) initCarousel(images.length);
   } catch (err) {
