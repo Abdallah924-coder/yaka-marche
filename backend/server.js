@@ -27,6 +27,7 @@ const DEFAULT_OG_IMAGE = `${APP_URL}/og-image.png`;
 
 const app = express();
 
+app.set('trust proxy', 1);
 // Headers de securite standards (X-Content-Type-Options, X-Frame-Options,
 // Strict-Transport-Security, etc.). CSP desactivee : le site charge des
 // images en base64 (data:) et des scripts tiers (Google Analytics, fonts)
