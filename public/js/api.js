@@ -129,6 +129,16 @@ async function toggleFavorite(listingId) {
 function isNew(createdAt) {
   return (Date.now() - new Date(createdAt).getTime()) < 24 * 60 * 60 * 1000;
 }
+// Echappe tout contenu fourni par un utilisateur (titre, description, nom,
+// commentaire...) avant de l'inserer dans du HTML via innerHTML/template
+// litteral. Sans ça, quelqu'un pourrait publier une annonce dont le titre
+// contient du code qui s'executerait chez les autres visiteurs (vol du
+// token de connexion stocke en localStorage, entre autres).
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str === null || str === undefined ? '' : String(str);
+  return div.innerHTML;
+}
 // Copie un texte dans le presse-papier, avec repli si l'API n'est pas disponible.
 async function copyToClipboard(text) {
   try {

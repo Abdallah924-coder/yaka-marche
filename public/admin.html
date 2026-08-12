@@ -167,9 +167,8 @@ function renderRequests(requests) {
       <div class="row">
         <div>
           <span class="badge badge-pending">En attente</span>
-          <h3 style="margin-top:8px;">${r.listing ? r.listing.title : 'Annonce supprimée'}</h3>
-          <div class="meta">
-            ${r.user ? r.user.name + ' · ' + r.user.email + ' · ' + r.user.phone : 'Utilisateur inconnu'}<br>
+          <h3 style="margin-top:8px;">${r.listing ? escapeHtml(r.listing.title) : 'Annonce supprimée'}</h3>
+${r.user ? escapeHtml(r.user.name) + ' · ' + escapeHtml(r.user.email) + ' · ' + escapeHtml(r.user.phone) : 'Utilisateur inconnu'}<br>
             Méthode : ${r.method === 'momo' ? 'MTN Mobile Money' : 'Crypto'} · ${formatPrice(r.amountFcfa)}<br>
             Envoyé le ${formatDate(r.createdAt)}
           </div>

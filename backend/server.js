@@ -4,6 +4,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
+const helmet = require('helmet');
 const mongoose = require('mongoose');
 
 const authRoutes = require('./routes/auth');
@@ -15,6 +16,7 @@ const favoriteRoutes = require('./routes/favorites');
 const alertRoutes = require('./routes/alerts');
 const referralRoutes = require('./routes/referrals');
 const sitemapRoutes = require('./routes/sitemap');
+const { generalLimiter } = require('./middleware/rateLimit');
 
 const Listing = require('./models/Listing');
 const User = require('./models/User');
@@ -25,8 +27,17 @@ const DEFAULT_OG_IMAGE = `${APP_URL}/og-image.png`;
 
 const app = express();
 
+// Headers de securite standards (X-Content-Type-Options, X-Frame-Options,
+// Strict-Transport-Security, etc.). CSP desactivee : le site charge des
+// images en base64 (data:) et des scripts tiers (Google Analytics, fonts)
+// qu'une CSP par defaut bloquerait ; a affiner plus tard si besoin.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+
 // Compression Gzip/Brotli (Brotli si le client l'accepte, sinon Gzip) sur toutes les reponses.
 app.use(compression());
+
+// Filet de securite general contre l'abus/spam sur toute l'API.
+app.use('/api', generalLimiter);
 
 // Redirection canonique : force le domaine sans "www" et le HTTPS, pour eviter
 // que Google ne voie 2 versions differentes du meme site (mauvais pour le SEO).

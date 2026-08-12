@@ -28,8 +28,9 @@ const listingSchema = new mongoose.Schema({
     enum: CATEGORIES
   },
   price: { type: Number, required: true, min: 0 },
-  description: { type: String, required: true, trim: true },
-  city: { type: String, required: true, trim: true },
+  title: { type: String, required: true, trim: true, maxlength: 120 },
+  description: { type: String, required: true, trim: true, maxlength: 3000 },
+  city: { type: String, required: true, trim: true, maxlength: 100 },
   phone: { type: String, required: true, trim: true },
   images: {
     type: [String], // images en base64 (data URL), compressees cote client

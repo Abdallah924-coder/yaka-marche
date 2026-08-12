@@ -113,10 +113,10 @@ function render(data) {
 
   content.innerHTML = `
     <div class="panel" style="margin-bottom:28px;">
-      <h2 style="margin-bottom:6px;">${seller.name}</h2>
+      <h1 style="margin-bottom:6px;">${escapeHtml(seller.name)}</h1>
       <div class="rating-line" style="margin-bottom:8px;">${renderStars(seller.ratingAvg, seller.ratingCount)}</div>
       <div class="form-note">
-        ${seller.city ? seller.city + ' · ' : ''}Membre depuis ${formatDate(seller.memberSince)}
+        ${seller.city ? escapeHtml(seller.city) + ' · ' : ''}Membre depuis ${formatDate(seller.memberSince)}
       </div>
     </div>
 
@@ -127,11 +127,11 @@ function render(data) {
       ${listings.length ? listings.map(l => `
         <a class="card ${l.featured ? 'featured' : ''}" href="/annonce?id=${l.id}">
           ${l.featured ? '<div class="featured-tag">En avant</div>' : ''}
-          <div class="card-thumb">${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="${l.title}" loading="lazy">` : 'Pas de photo'}</div>
+          <div class="card-thumb">${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="${escapeHtml(l.title)}" loading="lazy">` : 'Pas de photo'}</div>
           <span class="cat-pill">${l.category}</span>
-          <h3>${l.title}</h3>
+          <h3>${escapeHtml(l.title)}</h3>
           <div class="price mono">${formatPrice(l.price)}</div>
-          <div class="meta">${l.city}</div>
+          <div class="meta">${escapeHtml(l.city)}</div>
         </a>
       `).join('') : '<div class="empty">Aucune annonce active pour l\'instant.</div>'}
     </div>
@@ -143,10 +143,10 @@ function render(data) {
       ${reviews.length ? reviews.map(r => `
         <div class="review-card">
           <div class="head">
-            <span class="who">${r.reviewerName}</span>
+            <span class="who">${escapeHtml(r.reviewerName)}</span>
             ${renderStars(r.rating)}
           </div>
-          ${r.comment ? `<div class="comment">${r.comment}</div>` : ''}
+          ${r.comment ? `<div class="comment">${escapeHtml(r.comment)}</div>` : ''}
           <div class="meta" style="margin-top:4px;">${formatDate(r.createdAt)}</div>
         </div>
       `).join('') : '<div class="empty">Aucun avis pour l\'instant.</div>'}

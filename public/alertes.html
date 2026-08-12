@@ -152,9 +152,9 @@ function render(alerts) {
   listEl.innerHTML = alerts.map(a => `
     <div class="dash-row" data-id="${a.id}">
       <div class="info">
-        <h4>${a.category === 'Toutes' ? 'Toutes catégories' : a.category}${a.city ? ' · ' + a.city : ''}</h4>
-        <div class="meta">${a.keyword ? 'Mot-clé : ' + a.keyword : 'Sans mot-clé'} · créée le ${formatDate(a.createdAt)}</div>
-      </div>
+        <h4>${a.category === 'Toutes' ? 'Toutes catégories' : escapeHtml(a.category)}${a.city ? ' · ' + escapeHtml(a.city) : ''}</h4>
+<div class="meta">${a.keyword ? 'Mot-clé : ' + escapeHtml(a.keyword) : 'Sans mot-clé'} · créée le ${formatDate(a.createdAt)}</div>
+</div>
       <div class="actions">
         <button class="btn btn-danger btn-sm" data-delete="${a.id}">Supprimer</button>
       </div>

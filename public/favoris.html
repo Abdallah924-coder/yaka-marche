@@ -113,13 +113,13 @@ function render(listings) {
       ${isNew(l.createdAt) ? '<div class="new-tag">Nouveau</div>' : ''}
       <button class="heart-btn active" data-fav="${l.id}">♥</button>
       <div class="card-thumb">
-        ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="${l.title}" loading="lazy">` : 'Pas de photo'}
+        ${l.images && l.images[0] ? `<img src="${l.images[0]}" alt="${escapeHtml(l.title)}" loading="lazy">` : 'Pas de photo'}
       </div>
       <span class="cat-pill">${l.category}</span>
-      <h3>${l.title}</h3>
+      <h3>${escapeHtml(l.title)}</h3>
       <div class="price mono">${formatPrice(l.price)}</div>
       ${l.owner ? renderStars(l.owner.ratingAvg, l.owner.ratingCount) : ''}
-      <div class="meta">${l.city}</div>
+      <div class="meta">${escapeHtml(l.city)}</div>
     </a>
   `).join('');
 

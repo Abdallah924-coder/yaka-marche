@@ -100,12 +100,24 @@ function publicListing(listing, opts = {}) {
   };
 }
 
+
 // GET /api/listings?category=&search=&sort=recent|price_asc|price_desc
 // Par defaut, les annonces "featured" (mise en avant validee) apparaissent en premier.
 router.get('/', async (req, res) => {
   try {
     const { category, search, sort } = req.query;
     const filter = { status: 'active' };
+
+    // Securite : category/search doivent etre de simples chaines. Sans cette
+    // verification, une requete comme ?category[$ne]=null serait parsee par
+    // Express en objet ({ $ne: null }) et injectee telle quelle dans la
+    // requete MongoDB (contournement de filtre, voire pire).
+    if (category !== undefined && typeof category !== 'string') {
+      return res.status(400).json({ error: 'Parametre category invalide.' });
+    }
+    if (search !== undefined && typeof search !== 'string') {
+      return res.status(400).json({ error: 'Parametre search invalide.' });
+    }
 
     if (category && category !== 'Toutes') {
       filter.category = category;

@@ -156,8 +156,8 @@ function renderRows(listings) {
     return `
     <div class="dash-row" data-id="${l.id}">
       <div class="info">
-        <h4>${l.title} ${l.featured ? '<span class="featured-tag" style="position:static; margin-left:8px;">En avant</span>' : ''}</h4>
-        <div class="meta">${formatPrice(l.price)} · ${l.city} · publié le ${formatDate(l.createdAt)}</div>
+        <h4>${escapeHtml(l.title)} ${l.featured ? '<span class="featured-tag" style="position:static; margin-left:8px;">En avant</span>' : ''}</h4>
+        <div class="meta">${formatPrice(l.price)} · ${escapeHtml(l.city)} · publié le ${formatDate(l.createdAt)}</div>
         <div class="meta">
           👁 ${l.views || 0} vue${(l.views || 0) > 1 ? 's' : ''} (${l.viewsThisWeek || 0} cette semaine)
           · 💬 ${l.contactClicks || 0} contact${(l.contactClicks || 0) > 1 ? 's' : ''} (${l.contactsThisWeek || 0} cette semaine)
