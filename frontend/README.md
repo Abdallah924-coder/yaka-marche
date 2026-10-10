@@ -36,7 +36,7 @@ and database. Configure:
 
 - **Root Directory:** repository root (leave the field empty), so Render can
   access both `backend/` and `frontend/`
-- **Build Command:** `npm ci --prefix backend && npm ci --prefix frontend && npm run build --prefix frontend`
+- **Build Command:** `npm ci --prefix backend && npm ci --include=dev --prefix frontend && npm run build --prefix frontend`
 - **Start Command:** `npm start --prefix backend`
 - **Health Check Path:** `/api/health`
 - **Node version:** 20.9 or newer (the backend package declares this minimum)

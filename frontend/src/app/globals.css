@@ -49,7 +49,13 @@ h1, h2, h3, p { margin-top: 0; }
 .brand b { font-weight: 800; }
 .brand-mark {
   width: 34px; height: 34px; display: grid; place-items: center; border-radius: 11px;
-  background: var(--lime); color: var(--green-dark); font-size: 20px; font-weight: 900;
+  overflow: hidden; background: var(--green);
+}
+.brand-mark svg { width: 100%; height: 100%; padding: 3px; }
+.brand-mark svg path:nth-child(1) { fill: var(--lime); }
+.brand-mark svg path:nth-child(2) { fill: white; }
+.brand-mark svg path:nth-child(3), .brand-mark svg path:nth-child(4) {
+  fill: none; stroke: var(--green); stroke-linecap: round; stroke-linejoin: round; stroke-width: 25;
 }
 .header-search, .hero-search {
   height: 46px; display: flex; align-items: center; border: 1px solid #d8ddd6;
@@ -586,4 +592,102 @@ h1, h2, h3, p { margin-top: 0; }
 }
 @media (max-width: 430px) {
   .admin-stat-grid { grid-template-columns: 1fr; }
+}
+
+.header-menu { display: flex; align-items: center; gap: 20px; }
+.header-menu > .header-login:not(.header-account-home) { display: none; }
+.header-menu-toggle { display: none; }
+
+@media (max-width: 760px) {
+  .header-main { grid-template-columns: minmax(0, 1fr) auto; }
+  .header-actions { position: relative; min-width: 0; }
+  .header-menu-toggle {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: white;
+    color: var(--green-dark);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .header-menu {
+    position: absolute;
+    z-index: 5;
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(280px, calc(100vw - 32px));
+    display: none;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: white;
+    box-shadow: 0 12px 30px #17271e24;
+    white-space: normal;
+  }
+  .header-actions.is-open .header-menu { display: flex; }
+  .header-menu > .header-login,
+  .header-menu > .header-login:not(.header-account-home) {
+    display: block;
+    padding: 10px 11px;
+    border-radius: 5px;
+    font-size: 13px;
+  }
+  .header-menu > .header-login:hover { background: #f1f5ee; }
+  .header-menu > .header-logout {
+    padding: 10px 11px;
+    text-align: left;
+    font-size: 13px;
+  }
+  .header-menu > .button { width: 100%; margin-top: 6px; }
+  .catalog-layout, .product-layout, .account-tools,
+  .messaging-layout, .admin-boost-card { min-width: 0; }
+  .catalog-toolbar { flex-wrap: wrap; padding-block: 8px; }
+  .catalog-toolbar form { max-width: 100%; flex-wrap: wrap; }
+  .catalog-toolbar select { max-width: min(55vw, 230px); }
+  .seller-listing-card, .admin-user-row { min-width: 0; }
+  .seller-listing-info, .admin-user-row > div { min-width: 0; }
+  .seller-listing-info h2, .admin-user-row h3 { overflow-wrap: anywhere; }
+  .footer-legal { flex-wrap: wrap; }
+}
+
+@media (max-width: 520px) {
+  .site-shell { width: calc(100% - 28px); }
+  .header-main { gap: 8px; }
+  .brand { gap: 6px; font-size: 15px; }
+  .brand-mark { width: 28px; height: 28px; }
+  .header-search input { padding-inline: 10px; font-size: 13px; }
+  .hero h1 { letter-spacing: -1.8px; }
+  .hero-search { padding-left: 10px; }
+  .hero-search .button { padding-inline: 9px; }
+  .section-title-row { flex-wrap: wrap; }
+  .section-title-row > .text-link { max-width: none; padding-top: 0; }
+  .listing-card-meta { align-items: start; flex-direction: column; gap: 3px; }
+  .seller-stats { flex-wrap: wrap; }
+  .seller-stats > div { flex-basis: calc(50% - 6px); }
+  .seller-profile-heading { min-width: 0; gap: 12px; }
+  .seller-profile-heading > div { min-width: 0; }
+  .seller-profile-heading h1 { overflow-wrap: anywhere; font-size: 24px; }
+  .referral-stat-grid { grid-template-columns: 1fr; }
+  .boost-listing { align-items: flex-start; }
+  .boost-listing > div { min-width: 0; overflow-wrap: anywhere; }
+  .admin-review-actions .button { flex: 1 1 100%; }
+}
+
+@media (max-width: 380px) {
+  .site-shell { width: calc(100% - 24px); }
+  .brand { font-size: 14px; }
+  .header-menu-toggle { min-height: 35px; padding-inline: 9px; }
+  .header-search button { width: 42px; }
+  .listing-grid, .catalog-content .listing-grid { gap: 8px; }
+  .listing-card-body { padding: 8px; }
+  .listing-card h3 { overflow-wrap: anywhere; }
+  .category-tile { min-width: 0; }
 }

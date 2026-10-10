@@ -73,6 +73,12 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'yaka-marche-backend' });
 });
 
+app.get(['/sw.js', '/service-worker.js'], (req, res) => {
+  res.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
+  res.set('Service-Worker-Allowed', '/');
+  res.status(410).type('text/plain').send('Legacy service worker retired.');
+});
+
 app.use('/', sitemapRoutes);
 
 const legacyPageRedirects = {

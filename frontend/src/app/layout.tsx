@@ -31,8 +31,8 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   icons: {
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }, { url: "/favicon.ico" }],
-    apple: "/icons/apple-touch-icon.png",
+    icon: [{ url: "/brand-mark.svg", type: "image/svg+xml" }],
+    apple: "/icons/brand-touch-icon.png",
   },
 };
 
@@ -50,7 +50,7 @@ export default function RootLayout({
         "@type": "Organization",
         name: "Yaka Marché",
         url: "https://yaka-marche.xyz",
-        logo: "https://yaka-marche.xyz/icons/icon-512.png",
+        logo: "https://yaka-marche.xyz/brand-mark.svg",
       },
       {
         "@type": "WebSite",
@@ -68,6 +68,9 @@ export default function RootLayout({
 
   return (
     <html lang="fr" data-scroll-behavior="smooth">
+      <head>
+        <LegacyServiceWorkerCleanup />
+      </head>
       <body>
         <script
           type="application/ld+json"
@@ -75,7 +78,6 @@ export default function RootLayout({
             __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
           }}
         />
-        <LegacyServiceWorkerCleanup />
         <FavoritesProvider>
           {children}
           <SiteFooter />
