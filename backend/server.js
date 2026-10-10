@@ -20,6 +20,7 @@ const messageRoutes = require('./routes/messages');
 const sitemapRoutes = require('./routes/sitemap');
 const { generalLimiter } = require('./middleware/rateLimit');
 const { initializeFeaturedListings, expireFeaturedListings } = require('./utils/featured-listings');
+const { ensureAdminAccount } = require('./utils/admin-account');
 
 const frontendDir = path.join(__dirname, '..', 'frontend');
 const next = require('module').createRequire(path.join(frontendDir, 'package.json'))('next');
@@ -142,6 +143,7 @@ app.use((err, req, res, nextMiddleware) => {
 async function start() {
   try {
     await Promise.all([mongoose.connect(MONGODB_URI), nextApp.prepare()]);
+    await ensureAdminAccount();
     await initializeFeaturedListings();
     const expirationTimer = setInterval(() => {
       expireFeaturedListings().catch((err) => {

@@ -98,6 +98,8 @@ Express sert l'API (`/api/...`) et Next.js sert les pages du storefront.
 | `APP_URL` | URL publique du site, utilisée dans les emails et notifications |
 | `MARKETPLACE_API_URL` | URL absolue de l'API pour les requêtes Next.js serveur, avec `/api` |
 | `NEXT_PUBLIC_API_URL` | URL absolue de l'API pour le navigateur, avec `/api`, définie au build |
+| `ADMIN_EMAIL` | Adresse du compte administrateur, créé automatiquement si absent |
+| `ADMIN_INITIAL_PASSWORD` | Mot de passe initial secret (12 caractères minimum), à définir dans Render |
 
 Sans `BREVO_API_KEY`, l'app fonctionne quand même : les emails sont simplement ignorés (log en console), rien ne bloque.
 

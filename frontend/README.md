@@ -66,6 +66,7 @@ Render environment variables before deploying:
 | `MARKETPLACE_API_URL` | `https://yaka-marche.xyz/api` |
 | `NEXT_PUBLIC_API_URL` | `https://yaka-marche.xyz/api` |
 | `ADMIN_EMAIL` | Email authorized for the admin dashboard |
+| `ADMIN_INITIAL_PASSWORD` | Secret password of at least 12 characters; creates the admin account at startup if that email does not exist |
 | `BOOST_PRICE_FCFA` | Production promotion price |
 | `MOMO_NUMBER`, `MOMO_NAME` | Correct Mobile Money payment recipient |
 | `CRYPTO_NETWORK`, `CRYPTO_ADDRESS`, `CRYPTO_AMOUNT` | Correct optional crypto payment details |
@@ -75,6 +76,13 @@ in Render before triggering the deployment. Keep the existing mail variables
 (`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`) if password recovery
 and transactional email are in use. Never replace production payment details
 with the example values in `.env.example`.
+
+Set `ADMIN_EMAIL` and `ADMIN_INITIAL_PASSWORD` together in Render before
+deploying. The server hashes the password and creates that account only if it
+does not already exist. Existing admin credentials are preserved on later
+restarts; changing the environment password does not reset an existing account.
+Never put the initial password in Git, logs, or chat. Sign in through
+`/connexion` with the configured email and password.
 
 ## Safe release and rollback
 

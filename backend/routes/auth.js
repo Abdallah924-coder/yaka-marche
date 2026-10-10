@@ -53,6 +53,9 @@ router.post('/register', authLimiter, async (req, res) => {
     if (existing) {
       return res.status(409).json({ error: 'Un compte existe deja avec cet email.' });
     }
+    if (isAdminEmail(email.toLowerCase().trim())) {
+      return res.status(403).json({ error: 'Cette adresse est reservee au compte administrateur.' });
+    }
 
     let referrer = null;
     if (ref) {
