@@ -48,7 +48,7 @@ async function notifyMatchingAlerts(listing) {
     users.forEach((u) => { userMap[String(u._id)] = u; });
 
     const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
-    const listingLink = `${appUrl}/annonce?id=${listing._id}`;
+    const listingLink = `${appUrl}/produit/${listing._id}`;
 
     for (const userId of userIds) {
       const user = userMap[userId];

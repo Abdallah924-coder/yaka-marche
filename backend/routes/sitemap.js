@@ -15,6 +15,8 @@ router.get('/sitemap.xml', async (req, res) => {
       { loc: '/', priority: '1.0', changefreq: 'daily' },
       { loc: '/annonces', priority: '0.9', changefreq: 'hourly' },
       { loc: '/publier', priority: '0.6', changefreq: 'monthly' },
+      { loc: '/connexion', priority: '0.4', changefreq: 'yearly' },
+      { loc: '/inscription', priority: '0.4', changefreq: 'yearly' },
       { loc: '/mentions-legales', priority: '0.3', changefreq: 'yearly' },
       { loc: '/politique-de-confidentialite', priority: '0.3', changefreq: 'yearly' }
     ];
@@ -24,7 +26,7 @@ router.get('/sitemap.xml', async (req, res) => {
       .limit(5000);
 
     const listingUrls = listings.map((l) => ({
-      loc: `/annonce?id=${l._id}`,
+      loc: `/produit/${l._id}`,
       lastmod: new Date(l.createdAt).toISOString(),
       priority: '0.7',
       changefreq: 'weekly'

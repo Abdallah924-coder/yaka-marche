@@ -5,9 +5,10 @@
   "main": "server.js",
   "type": "commonjs",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.9.0"
   },
   "scripts": {
+    "build": "npm ci --prefix ../frontend && npm run build --prefix ../frontend",
     "start": "node server.js",
     "dev": "node --watch server.js"
   },

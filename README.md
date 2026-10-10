@@ -1,6 +1,6 @@
 # Yaka Marché
 
-Marketplace locale (acheteurs / vendeurs) pour le Congo — Node.js + Express + MongoDB côté serveur, pages HTML/CSS/JS classiques côté client, servies par le même serveur.
+Marketplace locale (acheteurs / vendeurs) pour le Congo — API Node.js + Express + MongoDB et storefront Next.js servis ensemble par le service Render existant.
 
 Un produit **WORLDIFYAI** — by Devoué.
 
@@ -10,8 +10,11 @@ Un produit **WORLDIFYAI** — by Devoué.
 
 ```
 yaka-marche/
+├── frontend/                  # storefront Next.js
+│   ├── src/app/                # accueil, catalogue, fiches produit, SEO
+│   └── README.md               # configuration du service Render unique
 ├── backend/
-│   ├── server.js              # point d'entrée Express (API + sert le frontend)
+│   ├── server.js              # serveur combiné Express API + Next.js
 │   ├── package.json
 │   ├── .env.example           # copier en .env et remplir
 │   ├── models/
@@ -24,7 +27,7 @@ yaka-marche/
 │   │   └── auth.js            # vérification du token JWT
 │   └── utils/
 │       └── brevo.js           # emails transactionnels via l'API HTTP Brevo
-└── public/                    # frontend statique, servi par le backend
+└── public/                    # ancienne interface conservée dans le dépôt
     ├── index.html              # accueil
     ├── inscription.html        # créer un compte
     ├── connexion.html          # se connecter
@@ -42,13 +45,22 @@ yaka-marche/
 - Parcourir les annonces, filtrer par catégorie, rechercher, trier par prix
 - Voir le détail d'une annonce sans créer de compte
 - Contacter le vendeur directement sur WhatsApp (numéro + message pré-rempli)
+- Catalogue Next.js responsive, favoris, alertes et profils vendeurs avec avis
+- Passer commande et signaler un paiement manuel directement au vendeur
 
 **Vendeurs**
 - Créer un compte (nom, email, téléphone, ville, mot de passe)
 - Publier une annonce (titre, catégorie, prix en FCFA, description, ville, WhatsApp)
 - Tableau de bord : liste de ses annonces, statistiques (total / mises en avant)
 - Modifier le statut, supprimer une annonce
-- **Mettre en avant** une annonce (500 FCFA) pour apparaître en tête des résultats — emplacement prévu dans le code pour brancher un vrai paiement Mobile Money avant de confirmer
+- **Mettre en avant** une annonce par paiement manuel Mobile Money ou crypto avec capture de preuve et validation admin avant activation
+- Publier, gérer et relancer ses annonces dans le nouveau storefront
+- Partager son lien de parrainage et utiliser les crédits gagnés
+- Voir les nouvelles commandes, vérifier le paiement reçu directement, puis suivre leur avancement
+
+Pour les commandes, l’acheteur signale le paiement et le vendeur doit
+confirmer lui-même sa réception. Yaka Marché ne collecte ni ne conserve
+l’argent et ne vérifie pas automatiquement les transactions.
 
 **Emails automatiques (Brevo)**
 - Email de bienvenue à l'inscription
@@ -56,17 +68,20 @@ yaka-marche/
 
 ## 3. Installation en local
 
-Prérequis : Node.js 18+, un cluster MongoDB (Atlas gratuit suffit), un compte Brevo (gratuit).
+Prérequis : Node.js 20.9+, un cluster MongoDB (Atlas gratuit suffit), un compte Brevo (gratuit).
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# renseigner MONGODB_URI, JWT_SECRET, BREVO_API_KEY dans .env
+# renseigner MONGODB_URI, JWT_SECRET, BREVO_API_KEY et les URL API dans .env
+npm run build
 npm start
 ```
 
-Le serveur démarre sur `http://localhost:5000` et sert à la fois l'API (`/api/...`) et les pages du site (`/`, `/annonces.html`, etc.).
+Depuis `backend/`, `npm run build` installe les dépendances verrouillées du
+frontend et construit Next.js. Le serveur démarre sur `http://localhost:5000` :
+Express sert l'API (`/api/...`) et Next.js sert les pages du storefront.
 
 ## 4. Variables d'environnement (`backend/.env`)
 
@@ -78,27 +93,40 @@ Le serveur démarre sur `http://localhost:5000` et sert à la fois l'API (`/api/
 | `BREVO_SENDER_EMAIL` | Adresse d'expédition validée dans Brevo |
 | `BREVO_SENDER_NAME` | Nom affiché comme expéditeur |
 | `PORT` | Port du serveur (5000 par défaut) |
-| `CORS_ORIGIN` | Origine autorisée si le frontend est un jour séparé du backend |
+| `CORS_ORIGIN` | Origine autorisée pour les clients API externes |
+| `APP_URL` | URL publique du site, utilisée dans les emails et notifications |
+| `MARKETPLACE_API_URL` | URL absolue de l'API pour les requêtes Next.js serveur, avec `/api` |
+| `NEXT_PUBLIC_API_URL` | URL absolue de l'API pour le navigateur, avec `/api`, définie au build |
 
 Sans `BREVO_API_KEY`, l'app fonctionne quand même : les emails sont simplement ignorés (log en console), rien ne bloque.
 
 ## 5. Mise en ligne
 
-Le plus simple : un seul service Node (le backend sert aussi les pages HTML).
+Le service Render existant sert maintenant les deux applications. Garder son
+domaine et `MONGODB_URI` ; aucune nouvelle base, aucun second service Web et
+aucune migration de données ne sont nécessaires.
 
-1. **Base de données** : créer un cluster gratuit sur MongoDB Atlas, récupérer l'URI de connexion.
-2. **Hébergement du serveur** : Render, Railway ou Fly.io (offres gratuites/pas chères disponibles).
-   - Build command : `npm install` (dans `backend/`)
-   - Start command : `npm start`
-   - Ajouter les variables d'environnement du `.env` dans les réglages de l'hébergeur
-3. **Nom de domaine** : pointer un domaine (ex. via WORLDIFYAI) vers l'hébergeur choisi.
+Dans les réglages Render du service actuel :
+
+- Root Directory : racine du dépôt (laisser le champ vide) afin que Render
+  puisse accéder à la fois à `backend/` et `frontend/`
+- Build Command : `npm ci --prefix backend && npm ci --prefix frontend && npm run build --prefix frontend`
+- Start Command : `npm start --prefix backend`
+- Health Check Path : `/api/health`
+- Node.js : version 20.9 ou plus récente
+
+Définir `NODE_ENV=production`, `APP_URL`, `CORS_ORIGIN`,
+`MARKETPLACE_API_URL` et `NEXT_PUBLIC_API_URL` avec l'origine
+`https://yaka-marche.xyz` (ajouter `/api` aux deux URL API). Vérifier aussi les
+variables existantes MongoDB, JWT, email, admin et paiement avant le
+déploiement. `NEXT_PUBLIC_API_URL` doit être disponible lors du build. Voir
+[frontend/README.md](frontend/README.md) pour les réglages détaillés, les tests
+de mise en ligne et la procédure de retour arrière.
 
 ## 6. Prochaines étapes suggérées
 
-- **Paiement Mobile Money réel** sur la mise en avant : brancher un agrégateur (MaxiCash, Semoa, ou API directe Airtel Money / MTN MoMo) sur la route `POST /api/listings/:id/boost` avant de confirmer `featured = true`.
-- **Upload de photos** pour les annonces (aujourd'hui : texte + prix + description uniquement).
-- **Modération** : validation manuelle ou automatique des annonces avant publication.
-- **Notation vendeurs** pour construire la confiance entre utilisateurs.
+- **Automatiser les paiements** de mise en avant : aujourd'hui le vendeur paie manuellement par Mobile Money ou crypto, puis un administrateur vérifie la preuve avant activation.
+- **Panier multi-annonces, livraison et résolution des litiges** pour compléter les parcours marketplace.
 
 ---
 

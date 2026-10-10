@@ -15,15 +15,13 @@ const sellerRoutes = require('./routes/sellers');
 const favoriteRoutes = require('./routes/favorites');
 const alertRoutes = require('./routes/alerts');
 const referralRoutes = require('./routes/referrals');
+const orderRoutes = require('./routes/orders');
+const messageRoutes = require('./routes/messages');
 const sitemapRoutes = require('./routes/sitemap');
 const { generalLimiter } = require('./middleware/rateLimit');
 
-const Listing = require('./models/Listing');
-const User = require('./models/User');
-const { renderWithMeta } = require('./utils/seo');
-
-const APP_URL = (process.env.APP_URL || 'https://yaka-marche.xyz').replace(/\/$/, '');
-const DEFAULT_OG_IMAGE = `${APP_URL}/og-image.png`;
+const frontendDir = path.join(__dirname, '..', 'frontend');
+const next = require('module').createRequire(path.join(frontendDir, 'package.json'))('next');
 
 const app = express();
 
@@ -57,7 +55,7 @@ app.use((req, res, next) => {
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 // Limite relevee pour accepter plusieurs images d'annonce + captures d'ecran en base64
-app.use(express.json({ limit: '15mb' }));
+app.use('/api', express.json({ limit: '15mb' }));
 
 // --- API ---
 app.use('/api/auth', authRoutes);
@@ -68,137 +66,45 @@ app.use('/api/sellers', sellerRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/referrals', referralRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/messages', messageRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, service: 'yaka-marche-backend' });
 });
 
-// --- SEO : sitemap.xml genere dynamiquement (toujours a jour) ---
 app.use('/', sitemapRoutes);
 
-const publicDir = path.join(__dirname, '..', 'public');
+const legacyPageRedirects = {
+  '/index.html': '/',
+  '/annonces.html': '/annonces',
+  '/publier.html': '/publier',
+  '/connexion.html': '/connexion',
+  '/inscription.html': '/inscription',
+  '/favoris.html': '/favoris',
+  '/alertes.html': '/alertes',
+  '/admin.html': '/admin',
+  '/tableau-de-bord.html': '/compte',
+  '/tableau-de-bord': '/compte',
+  '/mise-en-avant.html': '/mise-en-avant',
+  '/mot-de-passe-oublie.html': '/mot-de-passe-oublie',
+  '/reinitialiser-mot-de-passe.html': '/reinitialiser-mot-de-passe',
+  '/mentions-legales.html': '/mentions-legales',
+  '/politique-de-confidentialite.html': '/politique-de-confidentialite'
+};
 
-// --- Rendu cote serveur des balises meta pour les pages dynamiques ---
-// WhatsApp, Facebook, Twitter/X, LinkedIn et Telegram recuperent l'aperçu
-// d'un lien SANS executer le JavaScript de la page. Comme le contenu de
-// /annonce et /annonceur est normalement charge en JS, on injecte ici les
-// bonnes balises (titre, description, image, URL canonique) directement
-// dans le HTML envoye, pour que le partage affiche un aperçu correct.
-// Si l'annonce/le vendeur n'existe pas ou en cas d'erreur, on bascule sur
-// le fichier statique normal (fallback silencieux, rien de casse).
-
-app.get('/annonce', async (req, res, next) => {
-  try {
-    const id = req.query.id;
-    const listing = id ? await Listing.findById(id).populate('owner', 'name') : null;
-
-    if (!listing) return next();
-
-    const description = listing.description.length > 155
-      ? listing.description.slice(0, 152) + '...'
-      : listing.description;
-
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Product',
-      name: listing.title,
-      description,
-      image: listing.images && listing.images[0] ? listing.images[0] : DEFAULT_OG_IMAGE,
-      offers: {
-        '@type': 'Offer',
-        price: listing.price,
-        priceCurrency: 'XAF',
-        availability: listing.status === 'active'
-          ? 'https://schema.org/InStock'
-          : 'https://schema.org/OutOfStock',
-        url: `${APP_URL}/annonce?id=${listing._id}`,
-        areaServed: listing.city
-      },
-      ...(listing.owner ? { seller: { '@type': 'Person', name: listing.owner.name } } : {})
-    };
-
-    const html = renderWithMeta('annonce.html', {
-      title: `${listing.title} — Yaka Marché`,
-      description,
-      url: `${APP_URL}/annonce?id=${listing._id}`,
-      image: listing.images && listing.images[0] ? listing.images[0] : DEFAULT_OG_IMAGE,
-      robots: listing.status === 'active' ? 'index, follow' : 'noindex, follow',
-      jsonLd
-    });
-
-    res.set('Cache-Control', 'no-cache');
-    res.send(html);
-  } catch (err) {
-    next();
-  }
+app.get(Object.keys(legacyPageRedirects), (req, res) => {
+  res.redirect(301, legacyPageRedirects[req.path]);
 });
 
-app.get('/annonceur', async (req, res, next) => {
-  try {
-    const id = req.query.id;
-    const seller = id ? await User.findById(id) : null;
-
-    if (!seller) return next();
-
-    const description = `${seller.name} sur Yaka Marché${seller.city ? ' — ' + seller.city : ''}. ` +
-      `Note moyenne ${seller.ratingAvg > 0 ? seller.ratingAvg.toFixed(1) + '/5' : 'pas encore notee'}.`;
-
-    const jsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'ProfilePage',
-      mainEntity: {
-        '@type': 'Person',
-        name: seller.name,
-        ...(seller.ratingCount > 0 ? {
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: seller.ratingAvg,
-            reviewCount: seller.ratingCount
-          }
-        } : {})
-      }
-    };
-
-    const html = renderWithMeta('annonceur.html', {
-      title: `${seller.name} — Profil vendeur — Yaka Marché`,
-      description,
-      url: `${APP_URL}/annonceur?id=${seller._id}`,
-      image: DEFAULT_OG_IMAGE,
-      robots: 'index, follow',
-      jsonLd
-    });
-
-    res.set('Cache-Control', 'no-cache');
-    res.send(html);
-  } catch (err) {
-    next();
-  }
+app.get(['/annonce', '/annonce.html'], (req, res) => {
+  const id = typeof req.query.id === 'string' ? req.query.id : '';
+  res.redirect(301, id ? `/produit/${encodeURIComponent(id)}` : '/annonces');
 });
 
-// --- Frontend statique (dossier /public a la racine du projet) ---
-// "extensions: ['html']" permet des URLs propres : /connexion sert connexion.html
-// Cache HTTP : long pour les images/icones, plus court pour CSS/JS (encore en
-// developpement actif), et aucun cache pour les pages HTML (contenu qui doit
-// toujours etre a jour).
-app.use(express.static(publicDir, {
-  extensions: ['html'],
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.html')) {
-      res.setHeader('Cache-Control', 'no-cache');
-    } else if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
-      res.setHeader('Cache-Control', 'public, max-age=86400'); // 1 jour
-    } else if (/\.(png|jpg|jpeg|svg|ico|webp)$/.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=604800, immutable'); // 7 jours
-    }
-  }
-}));
-
-// Toute route non-API renvoie index.html (pages HTML classiques, pas de SPA framework)
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(publicDir, 'index.html'), (err) => {
-    if (err) next();
-  });
+app.get(['/annonceur', '/annonceur.html'], (req, res) => {
+  const id = typeof req.query.id === 'string' ? req.query.id : '';
+  res.redirect(301, id ? `/vendeur/${encodeURIComponent(id)}` : '/annonces');
 });
 
 const PORT = process.env.PORT || 5000;
@@ -209,13 +115,32 @@ if (!MONGODB_URI) {
   process.exit(1);
 }
 
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
+const nextApp = next({
+  dev: process.env.NODE_ENV !== 'production',
+  dir: frontendDir
+});
+const nextHandler = nextApp.getRequestHandler();
+
+app.all('*', (req, res, nextMiddleware) => {
+  if (req.path.startsWith('/api/')) return nextMiddleware();
+  nextHandler(req, res).catch(nextMiddleware);
+});
+
+app.use((err, req, res, nextMiddleware) => {
+  console.error('[frontend] Next.js request failed:', err);
+  if (res.headersSent) return nextMiddleware(err);
+  res.status(500).send('Une erreur est survenue lors du chargement de la page.');
+});
+
+async function start() {
+  try {
+    await Promise.all([mongoose.connect(MONGODB_URI), nextApp.prepare()]);
     console.log('Connecte a MongoDB');
-    app.listen(PORT, () => console.log(`Yaka Marche backend sur le port ${PORT}`));
-  })
-  .catch((err) => {
-    console.error('Echec de connexion a MongoDB :', err.message);
+    app.listen(PORT, () => console.log(`Yaka Marche (Next.js + Express) sur le port ${PORT}`));
+  } catch (err) {
+    console.error('Echec du demarrage de Yaka Marche :', err.message);
     process.exit(1);
-  });
+  }
+}
+
+start();
