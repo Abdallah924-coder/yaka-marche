@@ -155,9 +155,17 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
       user.resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
       await user.save();
 
-      const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
+      const appUrl = (process.env.APP_URL || 'https://yaka-marche.xyz').replace(/\/$/, '');
       const resetLink = `${appUrl}/reinitialiser-mot-de-passe?token=${rawToken}`;
-      resetPasswordEmail(user, resetLink).catch(() => {});
+      const emailResult = await resetPasswordEmail(user, resetLink);
+      if (emailResult?.sent) {
+        console.info('[auth] Email de reinitialisation accepte par Brevo.');
+      } else {
+        console.error('[auth] Email de reinitialisation non transmis par Brevo.', {
+          skipped: Boolean(emailResult?.skipped),
+          status: emailResult?.status
+        });
+      }
     }
 
     res.json({ ok: true, message: 'Si ce compte existe, un email de reinitialisation a ete envoye.' });

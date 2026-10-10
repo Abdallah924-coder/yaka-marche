@@ -29,7 +29,7 @@ export default function PasswordRecoveryForm({ token }: { token?: string }) {
       if (!response.ok) throw new Error(data.error || "Une erreur est survenue.");
       setSuccess(token
         ? "Ton mot de passe a été modifié. Tu peux maintenant te connecter."
-        : "Si cette adresse correspond à un compte, un email de réinitialisation a été envoyé.");
+        : "Si cette adresse correspond à un compte, un email de réinitialisation a été demandé. Vérifie aussi tes courriers indésirables et que tu as saisi l’adresse liée à ton compte.");
       formElement.reset();
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Une erreur est survenue.");

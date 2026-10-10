@@ -3,9 +3,14 @@
 
 async function sendEmail({ to, toName, subject, htmlContent }) {
   const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL;
 
-  if (!apiKey) {
-    console.log('[brevo] BREVO_API_KEY manquante - email non envoye a', to);
+  if (!apiKey || !senderEmail) {
+    const missing = [
+      !apiKey && 'BREVO_API_KEY',
+      !senderEmail && 'BREVO_SENDER_EMAIL'
+    ].filter(Boolean);
+    console.error(`[brevo] Envoi impossible : variable(s) Render manquante(s) : ${missing.join(', ')}.`);
     return { skipped: true };
   }
 
@@ -19,7 +24,7 @@ async function sendEmail({ to, toName, subject, htmlContent }) {
       },
       body: JSON.stringify({
         sender: {
-          email: process.env.BREVO_SENDER_EMAIL || 'contact@worldifyai.com',
+          email: senderEmail,
           name: process.env.BREVO_SENDER_NAME || 'Yaka Marche'
         },
         to: [{ email: to, name: toName || to }],
@@ -30,13 +35,14 @@ async function sendEmail({ to, toName, subject, htmlContent }) {
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error('[brevo] echec envoi email :', res.status, errText);
+      console.error('[brevo] Rejet Brevo :', res.status, errText);
       return { error: true, status: res.status };
     }
 
-    return await res.json();
+    const result = await res.json();
+    return { sent: true, messageId: result.messageId };
   } catch (err) {
-    console.error('[brevo] erreur reseau :', err.message);
+    console.error('[brevo] Echec reseau lors de l’envoi :', err.message);
     return { error: true, message: err.message };
   }
 }
