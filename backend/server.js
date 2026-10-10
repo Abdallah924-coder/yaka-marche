@@ -19,6 +19,7 @@ const orderRoutes = require('./routes/orders');
 const messageRoutes = require('./routes/messages');
 const sitemapRoutes = require('./routes/sitemap');
 const { generalLimiter } = require('./middleware/rateLimit');
+const { initializeFeaturedListings, expireFeaturedListings } = require('./utils/featured-listings');
 
 const frontendDir = path.join(__dirname, '..', 'frontend');
 const next = require('module').createRequire(path.join(frontendDir, 'package.json'))('next');
@@ -141,6 +142,13 @@ app.use((err, req, res, nextMiddleware) => {
 async function start() {
   try {
     await Promise.all([mongoose.connect(MONGODB_URI), nextApp.prepare()]);
+    await initializeFeaturedListings();
+    const expirationTimer = setInterval(() => {
+      expireFeaturedListings().catch((err) => {
+        console.error('[marketplace] Echec de l’expiration des mises en avant :', err);
+      });
+    }, 60 * 1000);
+    expirationTimer.unref();
     console.log('Connecte a MongoDB');
     app.listen(PORT, () => console.log(`Yaka Marche (Next.js + Express) sur le port ${PORT}`));
   } catch (err) {

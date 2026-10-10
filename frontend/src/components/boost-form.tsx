@@ -165,10 +165,11 @@ export default function BoostForm({ listingId }: { listingId: string }) {
       )}
       {credits > 0 && (
         <div className="boost-credit">
-          <div><strong>{credits} crédit{credits > 1 ? "s" : ""} gratuit{credits > 1 ? "s" : ""}</strong><p>Crédit obtenu grâce au parrainage, utilisable immédiatement.</p></div>
+          <div><strong>{credits} crédit{credits > 1 ? "s" : ""} gratuit{credits > 1 ? "s" : ""}</strong><p>Crédit obtenu grâce au parrainage. Cette mise en avant dure 14 jours.</p></div>
           <button className="button button-primary" type="button" disabled={busy} onClick={redeemCredit}>Utiliser un crédit gratuit</button>
         </div>
       )}
+      <p className="muted-copy">La mise en avant payante dure 14 jours. Ensuite, l’annonce reste publiée mais n’apparaît plus comme mise en avant.</p>
       <h2>Choisis ton mode de paiement</h2>
       <div className="boost-payment-options">
         <button type="button" className={`boost-payment-option${method === "momo" ? " selected" : ""}`} onClick={() => setMethod("momo")}>

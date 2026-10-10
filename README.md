@@ -43,6 +43,7 @@ yaka-marche/
 
 **Acheteurs**
 - Parcourir les annonces, filtrer par catégorie, rechercher, trier par prix
+- Filtrer par ville, avec Brazzaville et Pointe-Noire proposées en priorité
 - Voir le détail d'une annonce sans créer de compte
 - Contacter le vendeur directement sur WhatsApp (numéro + message pré-rempli)
 - Catalogue Next.js responsive, favoris, alertes et profils vendeurs avec avis
@@ -53,8 +54,8 @@ yaka-marche/
 - Publier une annonce (titre, catégorie, prix en FCFA, description, ville, WhatsApp)
 - Tableau de bord : liste de ses annonces, statistiques (total / mises en avant)
 - Modifier le statut, supprimer une annonce
-- **Mettre en avant** une annonce par paiement manuel Mobile Money ou crypto avec capture de preuve et validation admin avant activation
-- Publier, gérer et relancer ses annonces dans le nouveau storefront
+- **Mettre en avant** une annonce pendant 14 jours par paiement manuel Mobile Money ou crypto avec capture de preuve et validation admin avant activation
+- Publier, gérer et relancer gratuitement chaque annonce active une fois tous les 30 jours dans le nouveau storefront
 - Partager son lien de parrainage et utiliser les crédits gagnés
 - Voir les nouvelles commandes, vérifier le paiement reçu directement, puis suivre leur avancement
 

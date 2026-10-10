@@ -11,6 +11,13 @@ manual payments, buyer/seller messaging, paid listing promotion and admin
 approval, favorites, search alerts, referrals, seller profiles/reviews,
 password recovery, and legal pages.
 
+All existing listing categories remain available. Brazzaville and Pointe-Noire
+are suggested first in listing, account, order, alert, and catalogue city
+fields, with a catalogue filter for each. Sellers may still enter another
+Congo city. A paid promotion runs for 14 days, then the listing stays active
+without featured placement. The free relaunch moves an active listing up in
+recent sorting once every 30 days.
+
 ## Local development
 
 Use Node.js 20.9 or newer. The combined server needs dependencies from both

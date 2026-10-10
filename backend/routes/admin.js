@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Listing = require('../models/Listing');
 const BoostRequest = require('../models/BoostRequest');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { expireFeaturedListings } = require('../utils/featured-listings');
 
 const router = express.Router();
 
@@ -11,6 +12,7 @@ router.use(requireAuth, requireAdmin);
 // GET /api/admin/stats
 router.get('/stats', async (req, res) => {
   try {
+    await expireFeaturedListings();
     const [totalUsers, totalListings, totalFeatured, totalPendingBoosts, totalApprovedBoosts] = await Promise.all([
       User.countDocuments(),
       Listing.countDocuments(),

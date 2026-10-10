@@ -6,6 +6,7 @@ import { FormEvent, useState } from "react";
 import type { Listing } from "@/lib/listings";
 import { browserApiBaseUrl, formatPrice } from "@/lib/listings";
 import { useAuthToken, useAuthUser } from "@/lib/auth-session";
+import CitySuggestions from "@/components/city-suggestions";
 
 export default function OrderCheckout({ listing }: { listing: Listing }) {
   const router = useRouter();
@@ -72,7 +73,8 @@ export default function OrderCheckout({ listing }: { listing: Listing }) {
       <label htmlFor="order-phone">Ton numéro de téléphone</label>
       <input id="order-phone" name="buyerPhone" type="tel" defaultValue={user?.phone || ""} maxLength={30} required />
       <label htmlFor="order-city">Ville de livraison ou de retrait</label>
-      <input id="order-city" name="deliveryCity" defaultValue={user?.city || listing.city} maxLength={100} required />
+      <input id="order-city" name="deliveryCity" list="congo-cities" defaultValue={user?.city || listing.city} maxLength={100} required />
+      <CitySuggestions id="congo-cities" />
       <label htmlFor="order-address">Adresse ou point de rendez-vous <span>(facultatif)</span></label>
       <input id="order-address" name="deliveryAddress" maxLength={300} />
       <label htmlFor="order-note">Note au vendeur <span>(facultatif)</span></label>

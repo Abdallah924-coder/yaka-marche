@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AccountActions from "@/components/account-actions";
+import BrandMark from "@/components/brand-mark";
 import { categories } from "@/lib/listings";
 
 export default function SiteHeader() {
@@ -14,14 +15,7 @@ export default function SiteHeader() {
       <header className="site-header">
         <div className="site-shell header-main">
           <Link className="brand" href="/" aria-label="Yaka Marché, accueil">
-            <span className="brand-mark" aria-hidden="true">
-              <svg viewBox="0 0 512 512" focusable="false">
-                <path d="M145 148h222v52H145z" />
-                <path d="M176 200h160l20 191H156z" />
-                <path d="M205 200v-18a51 51 0 0 1 102 0v18" />
-                <path d="m218 267 38 38 72-78" />
-              </svg>
-            </span>
+            <BrandMark />
             <span>Yaka <b>Marché</b></span>
           </Link>
           <form className="header-search" action="/annonces" role="search">

@@ -4,6 +4,7 @@ const User = require('../models/User');
 const SearchAlert = require('../models/SearchAlert');
 const { requireAuth } = require('../middleware/auth');
 const { listingPublishedEmail, searchAlertEmail } = require('../utils/brevo');
+const { FEATURED_DURATION_MS } = require('../utils/featured-listings');
 
 const IMAGE_REQUIRED_CATEGORIES = Listing.IMAGE_REQUIRED_CATEGORIES;
 
@@ -87,7 +88,8 @@ function publicListing(listing, opts = {}) {
     city: listing.city,
     phone: listing.phone,
     images,
-    featured: listing.featured,
+    featured: listing.featured && (!listing.featuredUntil || listing.featuredUntil > new Date()),
+    featuredUntil: listing.featuredUntil,
     status: listing.status,
     views: listing.views || 0,
     contactClicks: listing.contactClicks || 0,
@@ -105,7 +107,7 @@ function publicListing(listing, opts = {}) {
 // Par defaut, les annonces "featured" (mise en avant validee) apparaissent en premier.
 router.get('/', async (req, res) => {
   try {
-    const { category, search, sort } = req.query;
+    const { category, search, city, sort } = req.query;
     const filter = { status: 'active' };
 
     // Securite : category/search doivent etre de simples chaines. Sans cette
@@ -118,12 +120,19 @@ router.get('/', async (req, res) => {
     if (search !== undefined && typeof search !== 'string') {
       return res.status(400).json({ error: 'Parametre search invalide.' });
     }
+    if (city !== undefined && typeof city !== 'string') {
+      return res.status(400).json({ error: 'Parametre city invalide.' });
+    }
 
     if (category && category !== 'Toutes') {
       filter.category = category;
     }
     if (search) {
       filter.$text = { $search: search };
+    }
+    if (city) {
+      const escapedCity = city.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.city = { $regex: escapedCity, $options: 'i' };
     }
 
     let query = Listing.find(filter).populate('owner', OWNER_FIELDS);
@@ -294,11 +303,11 @@ router.delete('/:id', requireAuth, async (req, res) => {
 // Voir routes/payments.js : le vendeur envoie une preuve de paiement,
 // et c'est l'administrateur qui valide et active le boost.
 
-const BUMP_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 1 fois par semaine
+const BUMP_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // une fois par mois
 
 // POST /api/listings/:id/bump
 // Relance gratuite : fait remonter l'annonce en haut du tri "plus recentes",
-// une fois par semaine maximum.
+// une fois tous les 30 jours maximum.
 router.post('/:id/bump', requireAuth, async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id);
@@ -307,22 +316,37 @@ router.post('/:id/bump', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Tu ne peux relancer que tes propres annonces.' });
     }
 
-    const last = listing.lastBumpedAt || listing.createdAt;
-    const elapsed = Date.now() - new Date(last).getTime();
+    if (listing.status !== 'active') {
+      return res.status(400).json({ error: 'Seules les annonces en ligne peuvent etre relancees.' });
+    }
 
-    if (elapsed < BUMP_COOLDOWN_MS) {
-      const nextBumpAt = new Date(new Date(last).getTime() + BUMP_COOLDOWN_MS);
+    const now = new Date();
+    const cooldownEndsAt = new Date(now.getTime() - BUMP_COOLDOWN_MS);
+    const nextBumpAt = new Date(
+      new Date(listing.lastBumpedAt || listing.createdAt).getTime() + BUMP_COOLDOWN_MS
+    );
+    const updatedListing = await Listing.findOneAndUpdate(
+      {
+        _id: listing._id,
+        owner: req.userId,
+        status: 'active',
+        $or: [
+          { lastBumpedAt: null, createdAt: { $lte: cooldownEndsAt } },
+          { lastBumpedAt: { $type: 'date', $lte: cooldownEndsAt } }
+        ]
+      },
+      { $set: { sortDate: now, lastBumpedAt: now } },
+      { new: true }
+    );
+
+    if (!updatedListing) {
       return res.status(429).json({
-        error: 'Tu as deja relance cette annonce cette semaine.',
+        error: 'Tu as deja relance cette annonce au cours des 30 derniers jours.',
         nextBumpAt
       });
     }
 
-    listing.sortDate = new Date();
-    listing.lastBumpedAt = new Date();
-    await listing.save();
-
-    res.json({ listing: publicListing(listing) });
+    res.json({ listing: publicListing(updatedListing) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erreur serveur.' });
@@ -378,6 +402,8 @@ router.post('/:id/redeem-boost-credit', requireAuth, async (req, res) => {
     await user.save();
 
     listing.featured = true;
+    listing.featuredUntil = new Date(Date.now() + FEATURED_DURATION_MS);
+    listing.sortDate = new Date();
     await listing.save();
 
     res.json({ listing: publicListing(listing), freeBoostCredits: user.freeBoostCredits });

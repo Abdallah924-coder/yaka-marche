@@ -42,6 +42,7 @@ const listingSchema = new mongoose.Schema({
   },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   featured: { type: Boolean, default: false },
+  featuredUntil: { type: Date, default: null },
   status: { type: String, enum: ['active', 'vendu', 'archive'], default: 'active' },
   views: { type: Number, default: 0 },
   contactClicks: { type: Number, default: 0 },

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BrandMark from "@/components/brand-mark";
 import { FormEvent, useState } from "react";
 import { browserApiBaseUrl } from "@/lib/listings";
 
@@ -37,7 +38,7 @@ export default function PasswordRecoveryForm({ token }: { token?: string }) {
 
   return (
     <main className="account-page">
-      <Link className="brand" href="/" aria-label="Yaka Marché, accueil"><span className="brand-mark">Y</span><span>Yaka <b>Marché</b></span></Link>
+      <Link className="brand" href="/" aria-label="Yaka Marché, accueil"><BrandMark /><span>Yaka <b>Marché</b></span></Link>
       <section className="account-card">
         <p className="eyebrow">Sécurité du compte</p>
         <h1>{token ? "Nouveau mot de passe" : "Mot de passe oublié ?"}</h1>

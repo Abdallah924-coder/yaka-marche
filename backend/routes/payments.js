@@ -4,6 +4,7 @@ const User = require('../models/User');
 const BoostRequest = require('../models/BoostRequest');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 const { boostPendingEmail, boostApprovedEmail } = require('../utils/brevo');
+const { FEATURED_DURATION_MS } = require('../utils/featured-listings');
 
 const router = express.Router();
 
@@ -107,6 +108,8 @@ router.post('/boost-requests/:id/approve', requireAuth, requireAdmin, async (req
     if (!listing) return res.status(404).json({ error: 'Annonce introuvable.' });
 
     listing.featured = true;
+    listing.featuredUntil = new Date(Date.now() + FEATURED_DURATION_MS);
+    listing.sortDate = new Date();
     await listing.save();
 
     boostRequest.status = 'approved';

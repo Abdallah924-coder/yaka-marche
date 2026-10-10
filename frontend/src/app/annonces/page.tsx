@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import ListingCard from "@/components/listing-card";
 import SiteHeader from "@/components/site-header";
+import CitySuggestions from "@/components/city-suggestions";
 import { categories, getListings, type Listing } from "@/lib/listings";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export const dynamic = "force-dynamic";
 type SearchParams = Promise<{
   q?: string;
   category?: string;
+  city?: string;
   sort?: string;
 }>;
 
@@ -27,6 +29,7 @@ export default async function ListingsPage({
   const params = await searchParams;
   const query = params.q?.trim() || "";
   const selectedCategory = params.category || "";
+  const selectedCity = params.city?.trim() || "";
   const sort = params.sort || "recent";
 
   let listings: Listing[] = [];
@@ -35,6 +38,7 @@ export default async function ListingsPage({
     listings = await getListings({
       search: query,
       category: selectedCategory,
+      city: selectedCity,
       sort,
     });
   } catch (error) {
@@ -48,14 +52,17 @@ export default async function ListingsPage({
       <main className="site-shell catalog-layout">
         <aside className="catalog-sidebar" aria-label="Filtres des annonces">
           <h2>Catégories</h2>
-          <Link className={!selectedCategory ? "filter-active" : ""} href="/annonces">
+          <Link className={!selectedCategory ? "filter-active" : ""} href={`/annonces${selectedCity ? `?city=${encodeURIComponent(selectedCity)}` : ""}`}>
             Toutes les catégories
           </Link>
           {categories.map((category) => (
             <Link
               key={category}
               className={selectedCategory === category ? "filter-active" : ""}
-              href={`/annonces?category=${encodeURIComponent(category)}`}
+              href={`/annonces?${new URLSearchParams({
+                category,
+                ...(selectedCity ? { city: selectedCity } : {}),
+              }).toString()}`}
             >
               {category}
             </Link>
@@ -72,7 +79,7 @@ export default async function ListingsPage({
               <p className="muted-copy">
                 {loadError
                   ? "Le catalogue ne répond pas pour le moment."
-                  : `${listings.length} annonce${listings.length > 1 ? "s" : ""} à découvrir`}
+                  : `${listings.length} annonce${listings.length > 1 ? "s" : ""} à découvrir${selectedCity ? ` à ${selectedCity}` : ""}`}
               </p>
             </div>
             <form className="catalog-search" action="/annonces" role="search">
@@ -85,19 +92,31 @@ export default async function ListingsPage({
                 placeholder="Produit, service, ville..."
               />
               {selectedCategory && <input type="hidden" name="category" value={selectedCategory} />}
+              {selectedCity && <input type="hidden" name="city" value={selectedCity} />}
               <button className="button button-primary" type="submit">Rechercher</button>
             </form>
           </div>
 
           <div className="catalog-toolbar">
-            <span>{selectedCategory || "Annonces récentes"}</span>
+            <span>{selectedCategory || "Annonces récentes"}{selectedCity ? ` · ${selectedCity}` : ""}</span>
             <Link className="text-link" href={`/alertes?${new URLSearchParams({
               ...(selectedCategory ? { category: selectedCategory } : {}),
+              ...(selectedCity ? { city: selectedCity } : {}),
               ...(query ? { keyword: query } : {}),
             }).toString()}`}>Créer une alerte pour cette recherche</Link>
+            <form className="city-filter" action="/annonces">
+              {query && <input type="hidden" name="q" value={query} />}
+              {selectedCategory && <input type="hidden" name="category" value={selectedCategory} />}
+              {sort !== "recent" && <input type="hidden" name="sort" value={sort} />}
+              <label htmlFor="city-filter">Ville</label>
+              <input id="city-filter" name="city" list="catalog-cities" defaultValue={selectedCity} maxLength={100} placeholder="Toutes les villes" />
+              <CitySuggestions id="catalog-cities" />
+              <button className="sort-submit" type="submit">{selectedCity ? "Filtrer" : "Choisir"}</button>
+            </form>
             <form action="/annonces">
               {query && <input type="hidden" name="q" value={query} />}
               {selectedCategory && <input type="hidden" name="category" value={selectedCategory} />}
+              {selectedCity && <input type="hidden" name="city" value={selectedCity} />}
               <label htmlFor="sort-listings">Trier par</label>
               <select id="sort-listings" name="sort" defaultValue={sort}>
                 <option value="recent">Plus récentes</option>
@@ -120,7 +139,7 @@ export default async function ListingsPage({
           ) : (
             <div className="catalog-message">
               <strong>Aucune annonce ne correspond à votre recherche.</strong>
-              <p>Essayez une autre catégorie ou un terme plus général.</p>
+              <p>Essayez une autre catégorie, une autre ville ou un terme plus général.</p>
               <Link className="button button-outline" href="/annonces">Voir toutes les annonces</Link>
             </div>
           )}

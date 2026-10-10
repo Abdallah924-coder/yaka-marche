@@ -8,6 +8,7 @@ export type Listing = {
   phone: string;
   images: string[];
   featured: boolean;
+  featuredUntil?: string | null;
   status: string;
   createdAt: string;
   lastBumpedAt?: string | null;
@@ -35,11 +36,13 @@ export const browserApiBaseUrl = (
 export async function getListings(params: {
   search?: string;
   category?: string;
+  city?: string;
   sort?: string;
 } = {}): Promise<Listing[]> {
   const url = new URL(`${apiBaseUrl}/listings`);
   if (params.search) url.searchParams.set("search", params.search);
   if (params.category) url.searchParams.set("category", params.category);
+  if (params.city) url.searchParams.set("city", params.city);
   if (params.sort) url.searchParams.set("sort", params.sort);
 
   const response = await fetch(url, { next: { revalidate: 60 } });

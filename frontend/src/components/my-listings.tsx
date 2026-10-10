@@ -9,7 +9,12 @@ import { useAuthToken } from "@/lib/auth-session";
 function canBump(listing: Listing) {
   const lastBumped = listing.lastBumpedAt;
   const last = lastBumped || listing.createdAt;
-  return Date.now() - new Date(last).getTime() >= 7 * 24 * 60 * 60 * 1000;
+  return Date.now() - new Date(last).getTime() >= 30 * 24 * 60 * 60 * 1000;
+}
+
+function nextBumpDate(listing: Listing) {
+  const last = listing.lastBumpedAt || listing.createdAt;
+  return new Date(new Date(last).getTime() + 30 * 24 * 60 * 60 * 1000);
 }
 
 export default function MyListings() {
@@ -118,6 +123,9 @@ export default function MyListings() {
                 <h2>{listing.title}</h2>
                 <strong>{formatPrice(listing.price)}</strong>
                 <p>{listing.city} · {listing.views || 0} vues · {listing.contactClicks || 0} contacts</p>
+                {listing.featured && listing.featuredUntil && (
+                  <p>Mise en avant jusqu’au {new Date(listing.featuredUntil).toLocaleDateString("fr-FR")}.</p>
+                )}
               </div>
               <div className="seller-listing-actions">
                 <Link className="button button-outline" href={`/produit/${encodeURIComponent(listing.id)}`}>Voir l’annonce</Link>
@@ -126,8 +134,13 @@ export default function MyListings() {
                     Mettre en avant
                   </Link>
                 )}
-                <button className="button button-outline" disabled={busyId === listing.id || !canBump(listing)} onClick={() => action(listing, "bump")}>
-                  Relancer
+                <button
+                  className="button button-outline"
+                  title={canBump(listing) ? "Relance gratuite disponible" : `Prochaine relance le ${nextBumpDate(listing).toLocaleDateString("fr-FR")}`}
+                  disabled={busyId === listing.id || listing.status !== "active" || !canBump(listing)}
+                  onClick={() => action(listing, "bump")}
+                >
+                  {canBump(listing) ? "Relancer gratuitement" : `Relance le ${nextBumpDate(listing).toLocaleDateString("fr-FR")}`}
                 </button>
                 <button className="button button-outline" disabled={busyId === listing.id || listing.status === "vendu"} onClick={() => action(listing, "status")}>
                   {listing.status === "active" ? "Archiver" : "Remettre en ligne"}

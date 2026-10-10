@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { browserApiBaseUrl, categories } from "@/lib/listings";
 import { useAuthToken, useAuthUser } from "@/lib/auth-session";
+import CitySuggestions from "@/components/city-suggestions";
 
 const imageRequiredCategories = ["Immobilier", "Electronique"];
 
@@ -121,7 +122,8 @@ export default function ListingForm() {
         </div>
         <div>
           <label htmlFor="listing-city">Ville</label>
-          <input id="listing-city" name="city" defaultValue={user?.city || ""} maxLength={100} required placeholder="Brazzaville" />
+          <input id="listing-city" name="city" list="congo-cities" defaultValue={user?.city || ""} maxLength={100} required placeholder="Brazzaville ou Pointe-Noire" />
+          <CitySuggestions id="congo-cities" />
         </div>
         <div className="form-full-width">
           <label htmlFor="listing-description">Description</label>

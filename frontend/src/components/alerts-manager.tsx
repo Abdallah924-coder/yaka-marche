@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { browserApiBaseUrl, categories } from "@/lib/listings";
 import { useAuthToken } from "@/lib/auth-session";
+import CitySuggestions from "@/components/city-suggestions";
 
 type SearchAlert = { id: string; category: string; city: string; keyword: string; createdAt: string };
 
@@ -84,7 +85,8 @@ export default function AlertsManager({
           {categories.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
         <label htmlFor="alert-city">Ville (facultatif)</label>
-        <input id="alert-city" value={city} onChange={(event) => setCity(event.target.value)} maxLength={100} placeholder="Brazzaville" />
+        <input id="alert-city" list="congo-cities" value={city} onChange={(event) => setCity(event.target.value)} maxLength={100} placeholder="Brazzaville ou Pointe-Noire" />
+        <CitySuggestions id="congo-cities" />
         <label htmlFor="alert-keyword">Mot-clé (facultatif)</label>
         <input id="alert-keyword" value={keyword} onChange={(event) => setKeyword(event.target.value)} maxLength={100} placeholder="Téléphone, appartement…" />
         {error && <p className="form-error" role="alert">{error}</p>}

@@ -120,7 +120,7 @@ function boostApprovedEmail(user, listingTitle) {
       <div style="font-family:sans-serif; padding:24px; color:#111;">
         <h2>Annonce mise en avant</h2>
         <p>Ton paiement a ete valide. Ton annonce "<strong>${listingTitle}</strong>" apparait
-        maintenant en tete des resultats.</p>
+        maintenant en tete des resultats pendant 14 jours.</p>
         ${footer()}
       </div>
     `

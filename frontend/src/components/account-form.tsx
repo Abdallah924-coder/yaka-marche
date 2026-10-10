@@ -6,6 +6,8 @@ import { FormEvent, useState } from "react";
 import { browserApiBaseUrl } from "@/lib/listings";
 import { notifyAuthChanged } from "@/lib/auth-session";
 import { isSafeInternalPath } from "@/lib/urls";
+import CitySuggestions from "@/components/city-suggestions";
+import BrandMark from "@/components/brand-mark";
 
 export default function AccountForm({
   mode,
@@ -55,7 +57,7 @@ export default function AccountForm({
   return (
     <main className="account-page">
       <Link className="brand" href="/" aria-label="Yaka Marché, accueil">
-        <span className="brand-mark" aria-hidden="true">Y</span>
+        <BrandMark />
         <span>Yaka <b>Marché</b></span>
       </Link>
       <section className="account-card">
@@ -83,7 +85,8 @@ export default function AccountForm({
               <label htmlFor="account-phone">Téléphone</label>
               <input id="account-phone" name="phone" type="tel" autoComplete="tel" required maxLength={30} />
               <label htmlFor="account-city">Ville</label>
-              <input id="account-city" name="city" autoComplete="address-level2" maxLength={100} />
+              <input id="account-city" name="city" list="congo-cities" autoComplete="address-level2" maxLength={100} placeholder="Brazzaville ou Pointe-Noire" />
+              <CitySuggestions id="congo-cities" />
             </>
           )}
           <label htmlFor="account-password">Mot de passe</label>
